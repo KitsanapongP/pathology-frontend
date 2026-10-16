@@ -35,6 +35,16 @@ const paths = {
   checkCircle: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-13 0 3 3 5-6",
   eye: "M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Zm13 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
   edit: "m14 4 6 6M4 20l1-6L16 3a2 2 0 0 1 3 0l2 2a2 2 0 0 1 0 3L10 19l-6 1Zm10 0h7",
+  play: "m8 4 12 8-12 8V4Z",
+  pause: "M7 4h3v16H7V4Zm7 0h3v16h-3V4Z",
+  stop: "M5 5h14v14H5V5Z",
+  undo: "M3 10h11a6 6 0 0 1 0 12M3 10l5-5m-5 5 5 5",
+  redo: "M21 10H10a6 6 0 0 0 0 12m11-12-5-5m5 5-5 5",
+  save: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12l4 4v12a2 2 0 0 1-2 2ZM7 3v6h10V3M7 21v-8h10v8",
+  volume: "m11 5-6 4H2v6h3l6 4V5Zm4 3a5 5 0 0 1 0 8m3-11a9 9 0 0 1 0 14",
+  waveform: "M4 10v4m4-8v12m4-16v20m4-17v14m4-9v4",
+  more: "M12 4h.01M12 12h.01M12 20h.01",
+  swap: "M3 7h18m-4-4 4 4-4 4M21 17H3m4-4-4 4 4 4",
 } as const;
 
 export type PortalIconName = keyof typeof paths;
