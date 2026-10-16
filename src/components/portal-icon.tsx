@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 
 const paths = {
+  location: "M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Zm-5 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
+  printer: "M6 9V2h12v7M6 18H3V9h18v9h-3M6 14h12v8H6v-8ZM17 11h1",
   home: "m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9",
   users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M17 4a4 4 0 0 1 0 8m5 9v-2a4 4 0 0 0-3-3.87M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
   file: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 0v6h6M8 12h8m-8 4h6",

@@ -30,6 +30,10 @@ export default function WorkspacePortal() {
       router.push("/portal/matching");
       return;
     }
+    if (module.number === "04") {
+      router.push("/portal/storage");
+      return;
+    }
     setSelected(module);
     dialog.current?.showModal();
   }

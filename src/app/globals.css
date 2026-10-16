@@ -777,3 +777,101 @@ button:not(:disabled), select {
   .matching-footer > .intake-button { min-height: 36px; }
   .matching-dialog { padding: 20px; }
 }
+
+/* Storage directory */
+.storage-main { min-height: calc(100svh - 84px); padding-bottom: 24px; color: #244775; }
+.storage-title { margin: 0 0 24px; font-size: 28px; line-height: 40px; font-weight: 700; color: #0b2d65; }
+.storage-landing { padding: 32px 40px 48px; }
+.storage-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 28px; max-width: 1020px; margin: 32px auto 8px; }
+.storage-card { display: flex; flex-direction: column; align-items: center; padding: 24px 28px 28px; border: 1px solid #d6e5f7; border-radius: 14px; background: linear-gradient(135deg,#fcfeff,#f3f8fd); transition: box-shadow 150ms,transform 150ms; text-align: center; }
+.storage-card:hover { box-shadow: 0 12px 32px #2c609b12; transform: translateY(-3px); }
+.storage-illustration { width: 100%; max-width: 320px; height: auto; }
+.storage-card h3 { font-size: 22px; line-height: 32px; font-weight: 600; color: #143c76; margin-top: 8px; }
+.storage-card p { color: #8498b4; font-size: 15px; margin: 8px 0 28px; }
+.storage-card .intake-button { width: 100%; margin-top: auto; min-height: 48px; }
+.storage-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.06fr); gap: 16px; align-items: start; }
+.storage-grid > * { min-width: 0; }
+.storage-panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+.storage-panel-heading .intake-button { min-height: 36px; padding: 6px 10px; white-space: nowrap; }
+.storage-panel-heading .intake-heading { font-size: 18px; }
+.storage-search-form { display: grid; gap: 16px; margin-top: 20px; }
+.storage-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.storage-filters label, .storage-edit label { display: flex; flex-direction: column; gap: 8px; color: #315784; font-size: 13px; font-weight: 500; min-width: 0; }
+.storage-date-filter { grid-column: 1 / -1; }
+.storage-date-filter > div { display: flex; align-items: center; gap: 10px; }
+.storage-date-filter input { width: 100%; min-width: 0; }
+.storage-actions { display: flex; gap: 12px; }
+.storage-actions .intake-button { min-width: 140px; }
+.storage-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 20px 0 12px; font-size: 13px; }
+.storage-list-heading h2 { font-weight: 600; }
+.storage-list-heading > span { color: #8a9db6; font-size: 12px; }
+.storage-table-scroll { max-width: 100%; overflow-x: auto; border: 1px solid #e2eaf6; border-radius: 8px; }
+.storage-table { white-space: nowrap; min-width: 620px; }
+.storage-table th, .storage-table td { padding: 8px 10px; font-size: 12px; }
+.storage-table td { height: 40px; }
+.storage-table tr:has(.storage-code) { cursor: pointer; }
+.storage-code { color: #24559a; font-weight: 500; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
+.storage-code:hover { text-decoration-color: currentColor; }
+.storage-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 5px; color: #128969; background: #eaf8f1; white-space: nowrap; font-size: 12px; }
+.storage-badge i { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+.storage-badge.warning { color: #c58c13; background: #fff6df; }
+.storage-pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; font-size: 12px; color: #8197b3; }
+.storage-pagination > div { display: flex; gap: 8px; align-items: center; }
+.storage-pagination .intake-select { width: 104px; min-height: 32px; padding: 4px 8px; font-size: 12px; }
+.storage-pagination .intake-page { width: 28px; height: 28px; min-width: 28px; }
+.storage-shell button:disabled { opacity: .4; cursor: default; }
+.storage-summary { display: grid; grid-template-columns: minmax(120px,.55fr) minmax(0,1fr); gap: 16px; padding: 12px; border: 1px solid #dfE9f6; border-radius: 9px; background: linear-gradient(135deg,#fbfdff,#f5f9ff); }
+.storage-summary-image { display: flex; align-items: center; justify-content: center; }
+.storage-summary dl { min-width: 0; }
+.storage-summary dl > div { display: grid; grid-template-columns: 100px minmax(0,1fr); gap: 12px; align-items: center; min-height: 34px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #e8eff7; }
+.storage-summary dl > div:last-child { border: none; }
+.storage-summary dt { color: #7b92b1; font-size: 12px; }
+.storage-summary dd { overflow-wrap: anywhere; }
+.storage-inline-button { color: #196ee7; display: inline-flex; vertical-align: middle; padding: 4px; border-radius: 4px; background: #e5efff; margin-left: 4px; }
+.storage-subheading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 20px 0 12px; }
+.storage-subheading .intake-heading { font-size: 16px; gap: 8px; }
+.storage-subheading .intake-heading-icon { width: 30px; height: 32px; background: transparent; }
+.storage-subheading .intake-heading-icon svg { width: 22px; height: 22px; }
+.storage-subheading > span { font-size: 12px; color: #8296b2; white-space: nowrap; }
+.storage-subheading .intake-button { min-height: 34px; padding: 5px 10px; white-space: nowrap; }
+.storage-loan { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; padding: 16px; border: 1px solid #dcece6; border-radius: 8px; background: #f1f9f6; }
+.storage-loan.out { border-color: #f4e6b9; background: #fff9e9; }
+.storage-loan > div { padding-right: 8px; border-right: 1px solid #e5e5d9; }
+.storage-loan > div:last-child { border: none; padding: 0; }
+.storage-loan span { display: block; color: #7d91ad; font-size: 11px; margin-bottom: 4px; }
+.storage-loan strong { font-weight: 500; font-size: 12px; overflow-wrap: anywhere; }
+.storage-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
+.storage-footer > div { display: flex; gap: 12px; }
+.storage-notice { padding: 12px 16px; margin-bottom: 16px; border: 1px solid #cfdff3; border-radius: 8px; background: #f6faff; font-size: 13px; }
+.storage-empty { text-align: center; padding: 40px; color: #889bb6; }
+.storage-edit { display: grid; gap: 20px; margin-top: 24px; }
+.storage-edit > .intake-button { justify-self: end; }
+.storage-location { display: flex; align-items: center; flex-direction: column; gap: 16px; padding: 32px 0 16px; text-align: center; }
+.storage-location > svg { color: #327be3; }
+.storage-location > span { font-size: 13px; color: #8397b1; }
+.storage-record { display: grid; gap: 16px; margin-top: 24px; font-size: 14px; }
+.storage-record ul { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; max-height: 300px; overflow: auto; }
+@media (max-width:1200px) { .storage-grid { grid-template-columns: 1fr; } .storage-summary { grid-template-columns: 220px minmax(0,1fr); } }
+@media (max-width:600px) {
+  .storage-title { font-size: 23px; line-height: 32px; margin-bottom: 20px; }
+  .storage-landing { padding: 24px 20px; } .storage-cards { grid-template-columns: 1fr; gap: 20px; margin-top: 24px; }
+  .storage-card { padding: 16px 20px 24px; } .storage-card h3 { font-size: 20px; } .storage-card p { font-size: 13px; }
+  .storage-panel-heading { align-items: flex-start; flex-wrap: wrap; } .storage-panel-heading .intake-heading { font-size: 18px; }
+  .storage-filters { gap: 12px; } .storage-actions .intake-button { min-width: 0; flex: 1; }
+  .storage-summary { grid-template-columns: 1fr; } .storage-summary-image .storage-illustration { max-width: 210px; }
+  .storage-summary dl > div { grid-template-columns: 96px minmax(0,1fr); gap: 8px; }
+  .storage-subheading { flex-wrap: wrap; } .storage-loan { grid-template-columns: 1fr 1fr; }
+  .storage-footer { flex-wrap: wrap; padding: 16px; } .storage-footer > div { width: 100%; } .storage-footer .intake-button { flex: 1; font-size: 12px; }
+}
+@media print {
+  .storage-shell .workspace-topbar, .storage-shell nav, .storage-title, .storage-search-panel, .storage-footer, .storage-notice, .storage-detail-panel button, .storage-shell dialog { display: none !important; }
+  .storage-main { background: white; padding: 0; } .storage-grid { display: block; } .storage-detail-panel { border: none; box-shadow: none; } .storage-table-scroll { overflow: visible; } .storage-table { min-width: 0; } .storage-summary { break-inside: avoid; }
+}
+@media (min-width:1400px) {
+  .storage-filters { grid-template-columns: 1.8fr 1fr 1fr; gap: 12px; }
+  .storage-date-filter { grid-column: auto; }
+  .storage-date-filter > div { gap: 6px; }
+  .storage-date-filter input { padding-inline: 7px; font-size: 12px; }
+  .storage-grid > .intake-panel { padding: 20px; }
+  .storage-table td { height: 36px; padding-block: 6px; }
+}

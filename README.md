@@ -112,3 +112,9 @@ Prompt: A photorealistic modern Thai university medical campus, white buildings
 on the left, a white clock tower on the right, tropical trees, a stone plaza and
 reflecting pool, soft morning light and pale blue sky, wide 16:9 composition with
 open central space. No people, text, logos, signage, or watermarks.
+
+### Storage directory
+- `/portal/storage`: choose examination containers or slide request boxes.
+- `/portal/storage/examinations` and `/portal/storage/requests`: searchable local fixtures, date/status filters, pagination, selected details, location editing and printing.
+- Box loans and returns require explicit confirmation; changes persist in sessionStorage for the current tab. Source fixtures are separate from live examination and matching records until storage APIs are supplied. Record detail dialogs do not fabricate clinical report content.
+- Container and box illustrations are original SVG components. Backend storage locations, QR manifests, audit history and concurrent inventory validation are pending integration.
