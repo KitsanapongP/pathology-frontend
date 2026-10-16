@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
+
+const notoSansThai = localFont({
+  src: "./fonts/NotoSansThai.ttf",
+  variable: "--font-noto-sans-thai",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Pathology Frontend",
@@ -10,7 +17,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="th">
+    <html lang="th" className={notoSansThai.variable}>
       <body className="antialiased">{children}</body>
     </html>
   );
