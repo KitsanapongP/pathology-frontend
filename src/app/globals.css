@@ -531,8 +531,9 @@ button:not(:disabled), select {
 .exam-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
 .exam-request-filters { display: grid; grid-template-columns: minmax(180px, 2fr) 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 .exam-requests-table td { height: 52px; }
-.exam-requests-table input[type=radio] { width: 18px; height: 18px; accent-color: #1461e8; cursor: pointer; }
-.exam-requests-table input:disabled { cursor: default; opacity: .4; }
+.exam-requests-table tbody tr[tabindex="0"] { cursor: pointer; }
+.exam-requests-table tbody tr[tabindex="0"]:hover { background: #f0f6ff; }
+.exam-requests-table tbody tr:focus-visible { outline: 2px solid #1461e8; outline-offset: -2px; }
 .exam-case-strip { display: flex; align-items: center; gap: 24px; margin-bottom: 16px; padding-block: 20px; }
 .exam-case-strip > div { flex: 1; min-width: 0; border-right: 1px solid #dce5f2; padding-right: 16px; }
 .exam-case-strip > div:last-of-type { border-right: none; }
