@@ -9,7 +9,7 @@ const paths = {
   settings: "m9 3-1 3-3 1-2 3 2 2v3l3 1 1 3h4l1-3 3-1 2-3-2-2V7l-3-1-1-3H9Zm3 6a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z",
   heart: "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8ZM6 12h3l2-4 2 8 2-4h3",
   calendar: "M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z",
-  refresh: "M20 7v5h-5M4 17v-5h5m-4-4a8 8 0 0 1 13-4l2 3M4 17l2 3a8 8 0 0 0 13-4",
+  refresh: "M3 12a9 9 0 0 1 15.36-6.36L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.36 6.36L3 16M8 16H3v5",
   bell: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-11 12a2 2 0 0 0 4 0",
   chevron: "m9 5 7 7-7 7",
   arrow: "M4 12h16m-6-6 6 6-6 6",
@@ -29,6 +29,12 @@ const paths = {
   microphone: "M15 5a3 3 0 0 0-6 0v7a3 3 0 0 0 6 0V5ZM5 11v1a7 7 0 0 0 14 0v-1m-7 8v3m-4 0h8m6-13v5",
   barcode: "M7 2H3v4m14-4h4v4M3 18v4h4m14-4v4h-4M7 7v10m3-10v10m4-10v10m3-10v10",
   archive: "M3 4h18v5H3V4Zm1 5h16v12H4V9Zm6 4h4",
+  upload: "M7 17H6a5 5 0 1 1 .3-10A6 6 0 0 1 18 8a4.5 4.5 0 0 1 0 9h-1M12 22V12m-4 4 4-4 4 4",
+  download: "M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5",
+  check: "m5 12 4 4L19 6",
+  checkCircle: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-13 0 3 3 5-6",
+  eye: "M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Zm13 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
+  edit: "m14 4 6 6M4 20l1-6L16 3a2 2 0 0 1 3 0l2 2a2 2 0 0 1 0 3L10 19l-6 1Zm10 0h7",
 } as const;
 
 export type PortalIconName = keyof typeof paths;

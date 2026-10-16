@@ -47,8 +47,14 @@ The dashboard uses sample counts, requests, service health, and logs.
 Log filters, search, detail dialogs, navigation previews, and the account menu
 work locally. Refresh updates the display time; it does not fetch service health.
 
-The Student / Professor portal provides the four module entry cards. They open
-preview dialogs; module workflows have not been implemented yet.
+The Student / Professor portal provides four module entry cards. The first
+opens `/portal/requests`; the other three open placeholder dialogs.
+
+Request intake supports local PDF/JPG/PNG selection (up to 10 MB per file),
+drag-and-drop, attachment previews, filters, sorting, pagination, and editing.
+New files remain queued for OCR until the backend is connected. Records and
+attachments currently live in browser memory and reset on a page reload.
+The four downloadable HTML forms can be opened and printed from a browser.
 
 The login page is in `src/app/page.tsx`. Global styles are in
 `src/app/globals.css`, and the root layout is in `src/app/layout.tsx`.
