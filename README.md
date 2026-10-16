@@ -48,8 +48,8 @@ Log filters, search, detail dialogs, navigation previews, and the account menu
 work locally. Refresh updates the display time; it does not fetch service health.
 
 The Student / Professor portal provides four module entry cards. The first
-opens `/portal/requests`, the second opens `/portal/examinations`, and the
-remaining two open placeholder dialogs.
+opens `/portal/requests`, the second opens `/portal/examinations`, the third
+opens `/portal/matching`, and the fourth opens a placeholder dialog.
 
 Request intake supports local PDF/JPG/PNG selection (up to 10 MB per file),
 drag-and-drop, attachment previews, filters, sorting, pagination, and editing.
@@ -74,6 +74,31 @@ request ID, and restored when that request is selected again. Audio remains
 in memory and is lost on reload. Confirmation locks text editing locally.
 The backend must enforce permissions, accession validity, and finalization
 when the API is integrated.
+
+## Slide and cassette matching
+
+`/portal/matching` includes a tray image with clickable slot overlays,
+filterable QR results, bulk selection, manual pairing, draft persistence,
+and confirmation. Duplicate or unreadable codes and missing request links
+cannot be confirmed. Confirmed rows are locked locally.
+
+The initial tray and associations are fixtures. Camera access is requested
+only after a user action; moving to a live camera clears fixture results.
+Scanning captures a frame and uses the browser's `BarcodeDetector` when
+available. Unsupported browsers show the captured frame and an error,
+without simulated detection results. Real QR lookup and validation still
+require the backend. No confidence percentage is invented for browser scans.
+
+Drafts, including the current frame, are saved in this tab's `sessionStorage`.
+Camera tracks are stopped after capture and on unmount. Frames and patient
+data are not uploaded to any external service by this frontend.
+
+The project asset `public/images/slide-tray.png` was generated using the
+built-in ImageGen tool. Prompt: An orthographic overhead photograph of a
+black laboratory tray with exactly eight columns and four rows of vertical
+glass microscope slides, small white QR-like labels and purple/pink histology
+stains, realistic neutral clinical light, aligned grid, no text, numbered
+badges, colored borders, interface, hands, people, or watermarks.
 
 The login page is in `src/app/page.tsx`. Global styles are in
 `src/app/globals.css`, and the root layout is in `src/app/layout.tsx`.

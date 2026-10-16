@@ -26,6 +26,10 @@ export default function WorkspacePortal() {
       router.push("/portal/examinations");
       return;
     }
+    if (module.number === "03") {
+      router.push("/portal/matching");
+      return;
+    }
     setSelected(module);
     dialog.current?.showModal();
   }

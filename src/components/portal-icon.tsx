@@ -45,6 +45,9 @@ const paths = {
   waveform: "M4 10v4m4-8v12m4-16v20m4-17v14m4-9v4",
   more: "M12 4h.01M12 12h.01M12 20h.01",
   swap: "M3 7h18m-4-4 4 4-4 4M21 17H3m4-4-4 4 4 4",
+  camera: "M14 4h-4L8 7H3v14h18V7h-5l-2-3Zm2 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+  zoom: "M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm6-2 6 6M10 6v8m-4-4h8",
+  signal: "M3 15h3v7H3v-7Zm7-6h3v13h-3V9Zm7-7h3v20h-3V2Z",
 } as const;
 
 export type PortalIconName = keyof typeof paths;
