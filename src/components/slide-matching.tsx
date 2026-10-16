@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { publicAsset } from "@/lib/public-asset";
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 import WorkspaceHeader from "./workspace-header";
@@ -169,7 +170,7 @@ export default function SlideMatching() {
 
   function renderTray(large = false) {
     return <div className={`matching-tray ${large ? "large" : ""}`} style={{ aspectRatio: `${data.imageWidth} / ${data.imageHeight}` }}>
-      {camera === "live" || camera === "scanning" ? <video ref={large ? zoomVideo : video} muted autoPlay playsInline aria-label="ภาพจากกล้อง" className="h-full w-full object-contain" /> : data.image ? <Image unoptimized src={data.image} alt="ถาดสไลด์สำหรับจับคู่คำร้อง" fill sizes={large ? "90vw" : "45vw"} className="object-contain" priority /> : <div className="exam-empty"><PortalIcon name="camera" className="size-12" /><p>ยังไม่มีภาพจากกล้อง</p></div>}
+      {camera === "live" || camera === "scanning" ? <video ref={large ? zoomVideo : video} muted autoPlay playsInline aria-label="ภาพจากกล้อง" className="h-full w-full object-contain" /> : data.image ? <Image unoptimized src={publicAsset(data.image)} alt="ถาดสไลด์สำหรับจับคู่คำร้อง" fill sizes={large ? "90vw" : "45vw"} className="object-contain" priority /> : <div className="exam-empty"><PortalIcon name="camera" className="size-12" /><p>ยังไม่มีภาพจากกล้อง</p></div>}
       {camera === "idle" && data.items.map(item => <button type="button" key={item.id} aria-label={`เลือกช่อง ${item.position}`} onClick={() => focusItem(item, true)} className={`matching-overlay overlay-${matchStatus(item, data.items)} ${focused?.id === item.id ? "focused" : ""}`} style={{ left: `${item.bounds.x * 100}%`, top: `${item.bounds.y * 100}%`, width: `${item.bounds.width * 100}%`, height: `${item.bounds.height * 100}%` }}><span>{item.position}</span></button>)}
     </div>;
   }

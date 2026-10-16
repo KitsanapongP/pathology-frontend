@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { publicAsset } from "@/lib/public-asset";
 import { useEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
 import WorkspaceHeader from "./workspace-header";
 import PortalIcon, { type PortalIconName } from "./portal-icon";
@@ -147,7 +148,7 @@ export default function RequestIntake() {
             {notice && <p role="status" className="mt-3 text-xs leading-5 text-[#07805a]">{notice}</p>}
           </section>
 
-          <section className="intake-panel intake-templates" aria-labelledby="templates-heading"><h2 id="templates-heading" className="intake-heading"><span className="intake-heading-icon"><PortalIcon name="file" /></span>ดาวน์โหลดแบบฟอร์มคำร้อง</h2><ul className="mt-4 space-y-2">{requestTemplates.map(template => <li key={template.file} className="flex min-h-[52px] items-center gap-3 rounded-lg border border-[#e5edf7] px-2.5 py-1.5"><span className={`intake-template-icon status-${template.color}`}><PortalIcon name="file" className="size-[22px]" /></span><span className="min-w-0 flex-1 text-sm">{template.title}</span><a href={`/forms/${template.file}.html`} download={`${template.title}.html`} className="intake-button intake-download"><PortalIcon name="download" className="size-4" />ดาวน์โหลด</a></li>)}</ul></section>
+          <section className="intake-panel intake-templates" aria-labelledby="templates-heading"><h2 id="templates-heading" className="intake-heading"><span className="intake-heading-icon"><PortalIcon name="file" /></span>ดาวน์โหลดแบบฟอร์มคำร้อง</h2><ul className="mt-4 space-y-2">{requestTemplates.map(template => <li key={template.file} className="flex min-h-[52px] items-center gap-3 rounded-lg border border-[#e5edf7] px-2.5 py-1.5"><span className={`intake-template-icon status-${template.color}`}><PortalIcon name="file" className="size-[22px]" /></span><span className="min-w-0 flex-1 text-sm">{template.title}</span><a href={publicAsset(`/forms/${template.file}.html`)} download={`${template.title}.html`} className="intake-button intake-download"><PortalIcon name="download" className="size-4" />ดาวน์โหลด</a></li>)}</ul></section>
         </div>
 
         <section className="intake-panel intake-results min-w-0" aria-labelledby="requests-heading">

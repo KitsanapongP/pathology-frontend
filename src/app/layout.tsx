@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import type { CSSProperties } from "react";
+import { publicAsset } from "@/lib/public-asset";
 import "./globals.css";
 
 const notoSansThai = localFont({
@@ -18,7 +20,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="th" className={notoSansThai.variable}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased" style={{ "--campus-background": `url("${publicAsset("/images/campus-background.png")}")` } as CSSProperties}>{children}</body>
     </html>
   );
 }

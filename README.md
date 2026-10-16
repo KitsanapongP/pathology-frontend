@@ -1,5 +1,18 @@
 # Pathology Frontend
 
+## Public demo on GitHub Pages
+
+Demo URL: https://KitsanapongP.github.io/pathology-frontend/
+
+The `Deploy to GitHub Pages` workflow builds and deploys on pushes to `main`.
+The repository's Settings → Pages must use **GitHub Actions** as the source.
+This is the UI demo described below; data is stored locally in each browser,
+not shared between visitors.
+
+The workflow sets `GITHUB_PAGES=true` and
+`NEXT_PUBLIC_BASE_PATH=/pathology-frontend` to export the site into `.next-pages/`.
+Normal `npm run dev` continues to serve at the root of localhost.
+
 Frontend starter for the pathology platform, with a demo role selector,
 an admin dashboard, and a Student / Professor workspace.
 
