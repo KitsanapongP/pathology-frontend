@@ -18,7 +18,8 @@ export default function LoginForm() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // Demo navigation only. No credentials are sent or stored.
+    // Temporary mock role navigation. Replace with the real login flow later.
+    // No credentials or role claims are sent or stored.
     router.push("/portal");
   }
 
@@ -46,11 +47,16 @@ export default function LoginForm() {
       <div className="mt-3 flex justify-end">
         <button type="button" aria-expanded={showHelp} aria-controls="password-help" onClick={() => setShowHelp(!showHelp)} className="rounded text-sm font-medium text-[#1556b8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">ลืมรหัสผ่าน?</button>
       </div>
-      {showHelp && <p id="password-help" role="status" className="mt-3 rounded-lg bg-blue-50 px-4 py-3 text-sm leading-6 text-[#516482]">ขณะนี้เป็นระบบสาธิต สามารถกดเข้าสู่ระบบได้โดยไม่ต้องกรอกชื่อผู้ใช้และรหัสผ่าน</p>}
+      {showHelp && <p id="password-help" role="status" className="mt-3 rounded-lg bg-blue-50 px-4 py-3 text-sm leading-6 text-[#516482]">กรุณาติดต่อผู้ดูแลระบบเพื่อขอความช่วยเหลือในการตั้งรหัสผ่านใหม่</p>}
 
       <button type="submit" className="mt-5 flex min-h-12 w-full items-center justify-center gap-3 rounded-lg bg-gradient-to-b from-[#123e7c] to-[#082958] px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">
         <Icon><path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5M3 12h13m-5-5 5 5-5 5" /></Icon>
-        เข้าสู่ระบบ
+        เข้าสู่ระบบ Student / Professor
+      </button>
+
+      <button type="button" onClick={() => router.push("/portal/admin")} className="mt-3 flex min-h-12 w-full items-center justify-center gap-3 rounded-lg border border-[#b8cbea] bg-[#f2f6fc] px-4 py-3 text-sm font-semibold text-[#164579] transition hover:bg-[#e7effa] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">
+        <Icon><path d="m12 3 8 4v6c0 5-8 9-8 9s-8-4-8-9V7l8-4Z" /><path d="m8 12 3 3 5-5" /></Icon>
+        เข้าสู่ระบบ Admin
       </button>
 
       <div className="my-4 flex items-center gap-3 text-sm text-[#71809a]"><span className="h-px flex-1 bg-[#dce3ed]" />หรือ<span className="h-px flex-1 bg-[#dce3ed]" /></div>
@@ -59,7 +65,6 @@ export default function LoginForm() {
         <Icon className="size-7"><path d="m2 8 10-5 10 5H2Zm2 12h16M2 23h20M5 11v6m5-6v6m4-6v6m5-6v6" /></Icon>
         <span className="text-left"><span className="block text-base font-semibold">เข้าสู่ระบบด้วย SSO</span><span className="mt-0.5 block text-xs">สำหรับบุคลากรของหน่วยงาน · เร็ว ๆ นี้</span></span>
       </button>
-      <p className="mt-4 text-center text-xs leading-5 text-[#77859b]">โหมดสาธิต · กดเข้าสู่ระบบได้โดยไม่ต้องกรอกข้อมูล</p>
     </form>
   );
 }
