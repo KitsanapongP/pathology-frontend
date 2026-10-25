@@ -70,23 +70,27 @@ New files remain queued for OCR until the backend is connected. Records and
 attachments currently live in browser memory and reset on a page reload.
 The four downloadable HTML forms can be opened and printed from a browser.
 
-## Examination workflow
+## Examination workstation
 
-`/portal/examinations` provides three connected views: request selection,
-voice recording, and review/confirmation. Only scanned, ready requests with
-an accession number can proceed. Accession numbers currently come from fixtures.
+`/portal/examinations` has a bounded icon-based command rail. Left/right pedals
+cycle only the visible rail actions; center activates. Recording has five
+choices: voice mode, Part, save draft, review and tools. Part, voice mode,
+editing and other tools open dedicated choosers with their own target sets.
+Header controls, report content and ordinary fields are excluded from the cycle.
 
-Microphone recording uses `getUserMedia` and `MediaRecorder` after an explicit
-button click. Pause, resume, stop, and audio playback operate locally. The foot
-switch is not connected. STT/LLM integration is pending; transcript lines can
-be entered manually and edited across Parts A–E, with search, replacement,
-undo, and redo. No generated clinical text is inserted automatically.
+Center hold (250ms) opens push-to-talk; release stops capture. Left double-tap
+backs/closes; right double-tap toggles help. F13/F14/F15 are hardware keys and
+F8/F9/F10 are test aliases. Final confirmation requires selecting its button,
+holding center 1.5 seconds, then releasing. There is no always-on microphone.
 
-Draft and confirmed text is saved in this tab's `sessionStorage`, keyed by
-request ID, and restored when that request is selected again. Audio remains
-in memory and is lost on reload. Confirmation locks text editing locally.
-The backend must enforce permissions, accession validity, and finalization
-when the API is integrated.
+Try request `0038` (say ศูนย์ ศูนย์ สาม แปด) or `0036`. Thai speech uses a removable
+browser SpeechRecognition adapter (`th-TH`); browser services may process audio
+remotely. Prepare browser microphone permission before hands-free use. Text and
+audio are saved locally in IndexedDB; confirmation does not submit to a backend.
+
+See [the interaction spec](docs/examinations-interaction-spec.md) and
+[the QA record](docs/examinations-qa.md). Run `npm run test:examinations` for
+controller/STT-adapter tests without a microphone or network.
 
 ## Slide and cassette matching
 

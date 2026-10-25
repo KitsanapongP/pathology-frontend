@@ -28,6 +28,15 @@ export function shortTime(seconds: number) {
   return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
 }
 
+export function recordingBlockReason(request: ExaminationRequest): string | null {
+  if (request.ocr === "ไม่สามารถสแกนได้") return "สแกนคำร้องไม่สำเร็จ ต้องแก้ไขและยืนยันข้อมูลก่อน";
+  if (request.ocr !== "สแกนแล้ว") return "รอผล OCR และยืนยันข้อมูลคำร้องก่อน";
+  if (request.review === "ต้องแก้ไข") return "ต้องแก้ไขและยืนยันข้อมูลคำร้องก่อน";
+  if (request.review !== "พร้อมใช้งาน") return "ต้องยืนยันข้อมูลคำร้องก่อน";
+  if (!request.accession) return "ยังไม่มีเลขการตรวจ";
+  return null;
+}
+
 export function readyForRecording(request: ExaminationRequest) {
-  return request.ocr === "สแกนแล้ว" && request.review === "พร้อมใช้งาน" && Boolean(request.accession);
+  return recordingBlockReason(request) === null;
 }
