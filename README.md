@@ -67,7 +67,7 @@ opens `/portal/matching`, and the fourth opens `/portal/storage`.
 Request intake is a full-width directory using pathology request-form labels.
 It supports scoped search (name, HN, AN, accession), Ward/OPD and examination
 filters, date ranges, OCR/review states, sorting, pagination and review editing.
-Manual PDF/JPG/PNG selection (up to 10 MB per file) is collapsed by default;
+Manual PDF/JPG/PNG selection (up to 10 MB per file) opens from a header button;
 there is no template download section. Local edits/files live in browser memory.
 Normal ingestion is scanner folder -> backend -> database -> request directory.
 The optional normalized snapshot loader supports refresh/polling once connected;

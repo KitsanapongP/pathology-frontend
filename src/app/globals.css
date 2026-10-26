@@ -978,3 +978,12 @@ button:not(:disabled), select {
   .request-detail-dialog > form, .request-detail-body { padding: 16px; } .request-detail-dialog > header { padding: 16px; }
   .request-field-grid { grid-template-columns: 1fr; gap: 16px; } .request-field-wide { grid-column: auto; }
 }
+.request-header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.request-upload-dialog { max-width: 640px; }
+.request-upload-dialog .request-manual-body { padding: 24px; }
+.request-directory .request-table { min-width: 1020px; }
+@media (max-width:600px) {
+  .request-header-actions { gap: 8px; }
+  .request-header-actions .intake-button { font-size: 12px; padding-inline: 10px; }
+  .request-upload-dialog .request-manual-body { padding: 16px; }
+}

@@ -1,9 +1,10 @@
+import { mockPatientName } from './mock-patient';
 import type { OcrResult, PathologyFields } from './ocr-result';
 
 // Authored from scratch: no source names, identifiers, dates or clinical text.
 // fieldDraft is a proposed extraction result; it is NOT returned by the OCR envelope.
 export function ocrExample(index: number): { result: OcrResult; fieldDraft: PathologyFields; patientName: string; hn: string } {
-  const patientName = ['นางสาว มะลิ แสงสมมติ', 'นาย ธารา ใจสมมติ', 'นาง พิมพ์ดาว สุขสมมติ', 'นาย ภูผา ยิ้มสมมติ'][index];
+  const patientName = mockPatientName(index);
   const hn = `HN-TEST-${String(index + 1).padStart(4, '0')}`;
   const accessionNumber = `${index === 0 ? 'CB' : 'S'}69-TEST-${String(index + 1).padStart(4, '0')}`;
   const fieldDraft: PathologyFields = {

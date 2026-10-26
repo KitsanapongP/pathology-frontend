@@ -1,3 +1,4 @@
+import { mockPatientName } from "./mock-patient";
 import { ocrExample } from "./ocr-examples";
 import { examinationOptions } from "./ocr-result";
 import type { OcrResult, PathologyFields } from "./ocr-result";
@@ -35,7 +36,7 @@ export function initialRequests(): RequestRecord[] {
       sender: senders[i % senders.length],
       fileName: `request-${number}.pdf`,
       hn: `HN${String(100001 + i)}`,
-      patientName: ["นางสาว มะลิ แสงสมมติ", "นาย ธารา ใจสมมติ", "นาง พิมพ์ดาว สุขสมมติ", "นาย ภูผา ยิ้มสมมติ"][i % 4],
+      patientName: mockPatientName(i),
       uploadedAt: `2026-10-${String(i < 12 ? 16 : Math.max(1, 15 - Math.floor((i - 12) / 4))).padStart(2, "0")}T${i < 12 ? `${String(Math.max(0, 10 - i)).padStart(2, "0")}:${i === 0 ? "24" : "18"}` : "14:20"}:00+07:00`,
       receivedAt: `2026-10-${String(25 - Math.floor(i / 6)).padStart(2, "0")}T${String(10 - i % 6).padStart(2, "0")}:20:00+07:00`,
       pathology: { accessionNumber: `S69-TEST-${number}`, an: i % 3 === 0 ? `AN-TEST-${number}` : "",
