@@ -62,13 +62,18 @@ work locally. Refresh updates the display time; it does not fetch service health
 
 The Student / Professor portal provides four module entry cards. The first
 opens `/portal/requests`, the second opens `/portal/examinations`, the third
-opens `/portal/matching`, and the fourth opens a placeholder dialog.
+opens `/portal/matching`, and the fourth opens `/portal/storage`.
 
-Request intake supports local PDF/JPG/PNG selection (up to 10 MB per file),
-drag-and-drop, attachment previews, filters, sorting, pagination, and editing.
-New files remain queued for OCR until the backend is connected. Records and
-attachments currently live in browser memory and reset on a page reload.
-The four downloadable HTML forms can be opened and printed from a browser.
+Request intake is a full-width directory using pathology request-form labels.
+It supports scoped search (name, HN, AN, accession), Ward/OPD and examination
+filters, date ranges, OCR/review states, sorting, pagination and review editing.
+Manual PDF/JPG/PNG selection (up to 10 MB per file) is collapsed by default;
+there is no template download section. Local edits/files live in browser memory.
+Normal ingestion is scanner folder -> backend -> database -> request directory.
+The optional normalized snapshot loader supports refresh/polling once connected;
+no university endpoint, OCR parsing, upload or database write is wired yet.
+See `docs/ocr-api-mapping.md` for schema observations and the proposed handoff.
+All OCR examples are authored synthetic fixtures with no original patient data.
 
 ## Examination workstation
 

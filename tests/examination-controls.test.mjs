@@ -119,7 +119,8 @@ test("the displayed spoken request example opens one ready fixture", () => {
 test("request status explains the same blockers that prevent recording", () => {
   const { examinationRequests, recordingBlockReason, readyForRecording } = load("examination-data.ts");
   const requests = examinationRequests();
-  const pending = requests.find(request => request.id.endsWith("0039"));
+  // Build a pending state explicitly: intake fixtures may already contain completed OCR.
+  const pending = { ...requests.find(request => request.id.endsWith("0039")), ocr: "รอประมวลผล" };
   assert.equal(readyForRecording(pending), false);
   assert.match(recordingBlockReason(pending), /OCR.*ยืนยัน/);
   const ready = requests.find(request => request.id.endsWith("0038"));

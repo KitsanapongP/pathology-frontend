@@ -6,7 +6,7 @@ import WorkspaceHeader from "./workspace-header";
 import PortalIcon, { type PortalIconName } from "./portal-icon";
 
 const modules: { number: string; title: string; lines: string[]; icon: PortalIconName; color: string }[] = [
-  { number: "01", title: "รับใบคำร้อง", lines: ["สแกนเอกสารด้วย OCR", "และตรวจสอบข้อมูล"], icon: "scan", color: "blue" },
+  { number: "01", title: "รับใบส่งตรวจ", lines: ["ค้นหาใบส่งตรวจ", "และตรวจสอบข้อมูล"], icon: "scan", color: "blue" },
   { number: "02", title: "บันทึกผลการตรวจ", lines: ["บันทึกเสียงระหว่างการตรวจ", "ด้วยระบบ Speech to Text"], icon: "microphone", color: "green" },
   { number: "03", title: "จับคู่สไลด์และคาสเซ็ต", lines: ["อ่านบาร์โค้ดและจับคู่คำร้อง", "กับข้อมูลการตรวจ"], icon: "barcode", color: "orange" },
   { number: "04", title: "คลังข้อมูล", lines: ["ค้นหาและดูข้อมูลใบคำร้อง", "และผลการตรวจ"], icon: "archive", color: "purple" },
@@ -44,10 +44,7 @@ export default function WorkspacePortal() {
 
       <main className="workspace-main flex min-h-[calc(100svh-84px)] items-center justify-center px-5 py-12 sm:px-8 lg:py-20">
         <div className="w-full max-w-[1104px]">
-          <header className="workspace-welcome mb-10 text-center lg:mb-12">
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-[#09285e] sm:text-5xl lg:text-[50px]">ยินดีต้อนรับ</h1>
-            <p className="mt-3 text-base text-[#798ba8] sm:text-xl lg:text-[23px]">กรุณาเลือกเมนูเพื่อเริ่มใช้งานระบบ</p>
-          </header>
+          <h1 className="sr-only">ระบบงานพยาธิวิทยา</h1>
           <section aria-label="เมนูการใช้งานระบบพยาธิวิทยา" className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:gap-7">
             {modules.map(module => <button type="button" key={module.number} onClick={() => openModule(module)} className={`workspace-module module-${module.color} group relative grid min-h-[220px] grid-cols-[128px_minmax(0,1fr)_56px] items-center gap-6 rounded-[22px] border border-white/85 bg-white/95 px-9 py-9 text-left shadow-[0_12px_32px_rgba(47,76,112,0.06)] transition duration-200 hover:-translate-y-1 hover:bg-white hover:shadow-[0_18px_40px_rgba(47,76,112,0.12)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600`}>
               <span className="workspace-module-number absolute left-7 top-6 text-lg font-semibold">{module.number}</span>

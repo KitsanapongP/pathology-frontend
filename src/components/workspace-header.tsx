@@ -17,7 +17,7 @@ export default function WorkspaceHeader() {
               <PortalIcon name="bell" className="size-6" />
               <span className="absolute right-1 top-0 size-2.5 rounded-full border-2 border-white bg-[#ee4e59]" />
             </button>
-            {notifications && <div className="portal-dropdown right-0 w-64"><p className="border-b border-[#edf1f7] px-4 py-3 text-sm font-semibold">การแจ้งเตือน</p><p className="px-4 py-4 text-sm leading-6 text-[#7385a1]">ยินดีต้อนรับสู่ระบบพยาธิวิทยา</p></div>}
+            {notifications && <div className="portal-dropdown right-0 w-64"><p className="border-b border-[#edf1f7] px-4 py-3 text-sm font-semibold">การแจ้งเตือน</p><p className="px-4 py-4 text-sm leading-6 text-[#7385a1]">ไม่มีการแจ้งเตือนใหม่</p></div>}
           </div>
           <div className="h-10 w-px bg-[#d9e2ef]" />
           <div className="relative">

@@ -28,3 +28,10 @@ Read `AGENTS.md` for the project's working instructions and the installed Next.j
 - ESLint: `npm run lint -- <changed .ts/.tsx paths>` (uses the installed dependency; no installation or prompts).
 - Production: `npm run build`. A Turbopack CSS-worker startup failure has been observed in this environment. Do not report a successful production build based on browser smoke tests alone.
 - Inspect the current Git changes before editing. Preserve unrelated work, including the separate `pathologyplateformserverdevproduction/` directory.
+
+## Request directory
+
+- `/portal/requests` uses form labels and a full-width list. Keep manual upload collapsed; do not restore template downloads or the general-purpose category column/filter.
+- Scanner folders, OCR extraction and database mapping belong to the backend. `RequestIntake.loadRecords(signal)` is the optional normalized snapshot boundary; without a connector, fixtures remain local and no background arrivals are simulated.
+- Keep receipt, upload, OCR generation and specimen collection dates distinct. Date filtering uses Asia/Bangkok. Request IDs, specimen accessions, HN and AN are separate identifiers; collector and requesting-doctor phone numbers are separate fields.
+- `docs/ocr-api-mapping.md` records the pending API contract. OCR examples are synthetic; never copy original patient files or clinical values into fixtures. Render OCR text/table cells as text, not executable HTML.
