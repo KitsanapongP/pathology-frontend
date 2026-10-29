@@ -14,10 +14,10 @@ function rig() {
     useCallback(fn) { cursor++; return fn; },
     useLayoutEffect(fn, deps) { const i = cursor++; const old = slots[i]; if (!old || deps.some((dep, n) => dep !== old.deps[n])) effects.push(() => { old?.cleanup?.(); slots[i] = { deps, cleanup: fn() }; }); },
   };
-  const module = { exports: {} };
+  const hookModule = { exports: {} };
   const source = fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../src/hooks/use-examination-focus.ts"), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-  new Function("require", "module", "exports", code)(name => { if (name === "react") return react; throw Error(name); }, module, module.exports);
+  new Function("require", "module", "exports", code)(name => { if (name === "react") return react; throw Error(name); }, hookModule, hookModule.exports);
   class Element {
     constructor(id, adjust) { this.dataset = { actionId: id, ...(adjust ? { pedalAdjust: adjust } : {}) }; this.textContent = id; this.classList = { add() {}, remove() {}, contains() { return false; } }; }
     getAttribute(name) { return name === "aria-label" ? this.textContent : null; }
@@ -26,12 +26,12 @@ function rig() {
   }
   class Input extends Element {} class Select extends Element {} class Textarea extends Element {}
   Object.assign(globalThis, { Element, HTMLInputElement: Input, HTMLSelectElement: Select, HTMLTextAreaElement: Textarea,
-    MutationObserver: class { constructor(callback) { observer = this; this.callback = callback; } observe(root, options) { this.options = options; } disconnect() {} }, requestAnimationFrame: cb => { frames.push(cb); return frames.length; }, cancelAnimationFrame() {} });
+    MutationObserver: class { constructor(callback) { observer = { callback }; } observe(root, options) { observer.options = options; } disconnect() {} }, requestAnimationFrame: cb => { frames.push(cb); return frames.length; }, cancelAnimationFrame() {} });
   const part = new Element("part", "part"), edit = new Element("edit"), help = new Element("help");
   function root(items, dialog = false) { return { tagName: dialog ? "DIALOG" : "DIV", querySelector: () => null, querySelectorAll: () => items, addEventListener() {}, removeEventListener() {}, contains: item => items.includes(item) }; }
   const rail = root([part, edit]), helpRoot = root([help], true), steps = [];
   let options = { context: "record", ready: true, root: () => rail, onPartAdjustmentStep: direction => steps.push(direction) };
-  function render(next = options) { options = next; cursor = 0; effects = []; const hook = module.exports.useExaminationFocus(options); for (const effect of effects) effect(); const pending = frames; frames = []; pending.forEach(fn => fn()); return hook; }
+  function render(next = options) { options = next; cursor = 0; effects = []; const hook = hookModule.exports.useExaminationFocus(options); for (const effect of effects) effect(); const pending = frames; frames = []; pending.forEach(fn => fn()); return hook; }
   function mutate() { observer.callback(); const pending = frames; frames = []; pending.forEach(fn => fn()); }
   return { render, mutate, get observer() { return observer; }, part, edit, help, rail, helpRoot, steps, options };
 }
