@@ -174,3 +174,28 @@ test("temporary STT reports actual audio capture separately from requesting reco
     assert.deepEqual(events, ["request", "capture", "stopped", "end"]);
   } finally { if (original === undefined) delete global.window; else global.window = original; }
 });
+
+// Load the hook's pure selection and range helpers without a browser.
+const focusModule = { exports: {} };
+const focusCode = ts.transpileModule(fs.readFileSync(path.resolve(testDirectory, "../src/hooks/use-examination-focus.ts"), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+new Function("require", "module", "exports", focusCode)(request => {
+  if (request === "react") return {};
+  throw new Error(`Unexpected dependency ${request}; extend the test loader explicitly.`);
+}, focusModule, focusModule.exports);
+const { restorePedalTarget, pedalRangeValue } = focusModule.exports;
+
+test("restoration uses a replacement action and ignores unavailable targets", () => {
+  const saved = { element: {}, actionId: "parts", label: "Part" };
+  const replacement = { element: {}, actionId: "parts", label: "Part" };
+  assert.equal(restorePedalTarget([replacement], saved), replacement);
+  assert.equal(restorePedalTarget([], saved), undefined);
+  const dialogTarget = { element: {}, label: "playback" };
+  assert.equal(restorePedalTarget([dialogTarget], { element: {}, label: "playback" }), dialogTarget);
+});
+
+test("foot range increment uses the pedal step and clamps at bounds", () => {
+  assert.equal(pedalRangeValue(3.2, 0, 12, 0.1, 5, 1), 8.2);
+  assert.equal(pedalRangeValue(10, 0, 12, 0.1, 5, 1), 12);
+  assert.equal(pedalRangeValue(2, 0, 12, 0.1, 5, -1), 0);
+  assert.equal(pedalRangeValue(2, 0, 12, 0.1, 0, 1), 2.1);
+});
