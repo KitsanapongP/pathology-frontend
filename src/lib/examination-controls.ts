@@ -5,7 +5,7 @@ export type ExaminationPanel = "results" | "parts" | "voice" | "tools" | "lines"
 export type PedalContext = ExaminationScreen | ExaminationPanel | "help" | "confirm";
 export type PedalAction = "previousControl" | "nextControl" | "activate" | "speak" | "back" | "help" | "confirm";
 export type PedalBinding = { tap?: PedalAction; hold?: PedalAction; doubleTap?: PedalAction; minimumHoldMs?: number; holdDelayMs?: number };
-export type PedalPresentation = { voiceLabel?: string; confirmFocused?: boolean; adjusting?: boolean };
+export type PedalPresentation = { voiceLabel?: string; confirmFocused?: boolean; adjusting?: boolean; partAdjusting?: boolean };
 export const pedalBindings = {
   left: { title: "ซ้าย", position: "ซ้าย", hardware: "F13", keyboard: "F8", color: "#158575" },
   center: { title: "กลาง", position: "กลาง", hardware: "F14", keyboard: "F9", color: "#5178c7" },
@@ -18,14 +18,15 @@ export const examinationSteps = ["ระบุคำร้อง", "บันท
 const navigationMap: Record<Pedal, PedalBinding> = {
   left: { tap: "previousControl", doubleTap: "back" },
   center: { tap: "activate", hold: "speak", holdDelayMs: pedalTiming.voiceHoldMs },
-  right: { tap: "nextControl", doubleTap: "help" },
+  right: { tap: "nextControl" },
 };
 export const examinationPedalMap: Record<PedalContext, Record<Pedal, PedalBinding>> = Object.fromEntries(
   (["standby", "case", "record", "review", "complete", "help", "confirm", "results", "parts", "voice", "tools", "lines", "entry", "edit", "playback"] as PedalContext[]).map(context => [context, navigationMap]),
 ) as Record<PedalContext, Record<Pedal, PedalBinding>>;
 
-export function resolvePedalBinding(context: PedalContext, pedal: Pedal, confirmFocused = false): PedalBinding {
+export function resolvePedalBinding(context: PedalContext, pedal: Pedal, confirmFocused = false, partAdjusting = false): PedalBinding {
   if (context === "confirm" && pedal === "center" && confirmFocused) return { hold: "confirm", minimumHoldMs: pedalTiming.confirmHoldMs };
+  if (partAdjusting) return { tap: pedal === "left" ? "previousControl" : pedal === "right" ? "nextControl" : "activate" };
   return examinationPedalMap[context][pedal];
 }
 
@@ -37,18 +38,16 @@ export function examinationPedalInstructions(context: PedalContext, _primaryActi
   return [
     { pedal: "left", action: "เลื่อนกรอบ", icon: "undo", steps: [
       { gesture: "กด 1 ครั้ง", result: presentation.adjusting ? "ลดค่า" : "เลือกรายการก่อนหน้า" },
-      { gesture: "กด 2 ครั้งเร็ว ๆ", result: backLabel },
+      ...(!presentation.partAdjusting ? [{ gesture: "กด 2 ครั้งเร็ว ๆ", result: backLabel }] : []),
     ] },
     { pedal: "center", action: confirming ? "ยืนยันผลตรวจ" : "กดปุ่มที่เลือก", icon: confirming ? "check" : "microphone", steps: confirming ? [
       { gesture: `ค้าง ${pedalTiming.confirmHoldMs / 1000} วินาที`, result: "ยกเท้าเพื่อยืนยันผล" },
     ] : [
       { gesture: "กด 1 ครั้ง", result: presentation.adjusting ? "จบการปรับค่า" : "กดปุ่มในกรอบเขียว" },
-      { gesture: "เหยียบค้าง", result: voiceLabel },
-      { gesture: "ยกเท้า", result: "หยุดรับเสียง" },
+      ...(!presentation.partAdjusting ? [{ gesture: "เหยียบค้าง", result: voiceLabel }, { gesture: "ยกเท้า", result: "หยุดรับเสียง" }] : []),
     ] },
     { pedal: "right", action: "เลื่อนกรอบ", icon: "arrow", steps: [
       { gesture: "กด 1 ครั้ง", result: presentation.adjusting ? "เพิ่มค่า" : "เลือกรายการถัดไป" },
-      { gesture: "กด 2 ครั้งเร็ว ๆ", result: context === "help" ? "ปิดคู่มือ" : "เปิดคู่มือ" },
     ] },
   ];
 }

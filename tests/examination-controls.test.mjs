@@ -60,14 +60,14 @@ test("left double tap backs out of every screen and dialog without moving focus"
     assert.deepEqual(r.events, [["perform", "back"]], context);
   }
 });
-test("right double tap toggles help in every context including help and confirmation", () => {
+test("rapid right taps move immediately without opening help", () => {
   for (const context of Object.keys(examinationPedalMap)) {
     const r = rig(); r.press("right", context); r.release("right"); r.advance(100); r.press("right", context); r.release("right"); r.advance(1000);
-    assert.deepEqual(r.events, [["perform", "help"]], context);
+    assert.deepEqual(r.events, [["perform", "nextControl"], ["perform", "nextControl"]], context);
   }
 });
-test("single side taps navigate only after the double-tap window", () => {
-  const r = rig(); r.press("right", "record"); r.release("right"); r.advance(349); assert.deepEqual(r.events, []); r.advance(1);
+test("right taps are immediate and left taps retain the back window", () => {
+  const r = rig(); r.press("right", "record"); r.release("right"); assert.deepEqual(r.events, [["perform", "nextControl"]]);
   r.press("left", "record"); r.release("left"); r.advance(350);
   assert.deepEqual(r.events, [["perform", "nextControl"], ["perform", "previousControl"]]);
 });
@@ -84,11 +84,11 @@ test("cancel before threshold prevents mic start, while cancel during speech sto
   assert.deepEqual(r.events, [["start", "speak"], ["stop", "speak", true]]);
 });
 test("context cancellation cannot carry a tap or hold into the next screen", () => {
-  const r = rig(); r.press("right", "record"); r.release("right"); r.cancel(); r.advance(1000);
+  const r = rig(); r.press("left", "record"); r.release("left"); r.cancel(); r.advance(1000);
   r.press("center", "case"); r.cancel(); r.advance(2000); r.release("center"); assert.deepEqual(r.events, []);
 });
 test("pressing another pedal cancels a pending side tap", () => {
-  const r = rig(); r.press("right", "record"); r.release("right"); r.press("center", "record"); r.advance(250); r.release("center"); r.advance(1000);
+  const r = rig(); r.press("left", "record"); r.release("left"); r.press("center", "record"); r.advance(250); r.release("center"); r.advance(1000);
   assert.deepEqual(r.events, [["start", "speak"], ["stop", "speak", false]]);
 });
 test("presses while processing are ignored rather than queued", () => {
@@ -198,4 +198,17 @@ test("foot range increment uses the pedal step and clamps at bounds", () => {
   assert.equal(pedalRangeValue(10, 0, 12, 0.1, 5, 1), 12);
   assert.equal(pedalRangeValue(2, 0, 12, 0.1, 5, -1), 0);
   assert.equal(pedalRangeValue(2, 0, 12, 0.1, 0, 1), 2.1);
+});
+
+test("rapid Part steps never trigger back or help and center only exits adjustment", () => {
+  for (const pedal of ["left", "right"]) {
+    const r = rig();
+    for (let i = 0; i < 4; i++) { r.press(pedal, "record", true, false, true); r.release(pedal); r.advance(50); }
+    assert.deepEqual(r.events, Array.from({length:4}, () => ["perform", pedal === "left" ? "previousControl" : "nextControl"]));
+    r.advance(1000); assert.equal(r.events.length, 4);
+  }
+  const r = rig(); r.press("center", "record", true, false, true); r.advance(1500); r.release("center");
+  assert.deepEqual(r.events, [["perform", "activate"]]);
+  const hints = examinationPedalInstructions("record", "", { adjusting:true, partAdjusting:true });
+  assert.equal(hints[0].steps.length, 1); assert.equal(hints[2].steps.length, 1);
 });

@@ -87,11 +87,13 @@ export default function ExaminationWorkflow() {
   const busy = Boolean(voice.mode);
   const commandCapture = commandArmed || (busy && voice.destination === "command");
   const voiceLabel = focus.target.field === "line" ? "แก้บรรทัดที่เลือก" : focus.target.field === "entry" ? "เพิ่มข้อความ" : context === "standby" || context === "case" ? "พูดเลขคำร้อง" : context === "record" && !commandCapture ? "บอกผลตรวจ" : "พูดคำสั่ง";
-  const presentation = { voiceLabel, confirmFocused: focus.target.confirm, adjusting: focus.target.adjusting };
+  const partAdjusting = focus.target.adjusting && !panel && !help && !confirmOpen;
+  const presentation = { partAdjusting, voiceLabel, confirmFocused: focus.target.confirm, adjusting: focus.target.adjusting };
   const pedals = useExaminationPedals({
     context,
     enabled: !busy && !loading,
     confirmFocused: focus.target.confirm,
+    partAdjusting,
     start: action => {
       if (loading || busy) return;
       if (!help && panel && panel !== "entry" && panel !== "edit") return;
@@ -396,10 +398,12 @@ export default function ExaminationWorkflow() {
     });
   };
   const actions: Action[] = screen === "standby" ? [
+    { id: "help", label: "คู่มือ", icon: "file" },
     { id: "search", label: "ค้นหาคำร้อง", icon: "search", initial: true },
   ] : screen === "case" ? [
     { id: "search", label: "ค้นหาคำร้อง", icon: "search", initial: !selected || !readyForRecording(selected) },
     { id: "start", label: primaryLabel, icon: "arrow", disabled: !selected || !readyForRecording(selected), initial: Boolean(selected && readyForRecording(selected)) },
+    { id: "help", label: "คู่มือ", icon: "file" },
   ] : screen === "record" ? [
     { id: "parts", label: `Part ${partId}`, icon: "folder", initial: true },
     { id: "latest", label: "แก้ล่าสุด", icon: "edit", disabled: !part.lines.length },
@@ -417,6 +421,7 @@ export default function ExaminationWorkflow() {
   ] : [
     { id: "view", label: "เปิดผลตรวจ", icon: "file" },
     { id: "next", label: "เคสถัดไป", icon: "arrow", initial: true },
+    { id: "help", label: "คู่มือ", icon: "file" },
   ];
   if ((screen === "record" || screen === "review") && saveStatus === "error") actions.push({ id: "save", label: "ลองบันทึกอีกครั้ง", icon: "save" });
   function runRailAction(id: string) {
@@ -432,6 +437,7 @@ export default function ExaminationWorkflow() {
     else if (id === "latest") openLatest();
     else if (id === "parts") focus.activate();
     else if (id === "tools") setPanel("tools");
+    else if (id === "help") setHelp(true);
   }
   const choice = (label: string, icon: PortalIconName, run: () => void, initial = false, disabled = false) => <button key={label} type="button" data-pedal-target data-pedal-default={initial ? "" : undefined} aria-label={label} disabled={busy || loading || disabled} onClick={run} className="station-choice"><PortalIcon name={icon} /><span>{label}</span></button>;
   const gestureStrip = <div className="station-gesture-strip" data-pedal-ignore>
@@ -489,7 +495,7 @@ export default function ExaminationWorkflow() {
         <div className="station-command-items" style={{ maxWidth: actions.length * 262 - 12 }}>{actions.map(action => <button key={action.id} data-pedal-target data-action-id={action.id} data-pedal-adjust={action.id === "parts" ? "part" : undefined} data-pedal-default={action.initial ? "" : undefined} aria-pressed={action.id === "parts" ? focus.target.adjusting && focus.target.label === action.label : undefined} aria-current={focus.target.label === action.label ? "true" : undefined} aria-label={action.label} disabled={busy || loading || action.disabled} onClick={event => { focus.selectTarget(event.currentTarget); runRailAction(action.id); }}><PortalIcon name={action.icon} /><span>{action.label}</span></button>)}</div>
         {actions.length > 1 && <span className="station-rail-direction right" data-pedal-ignore><ExaminationFootKey pedal="right" /><PortalIcon name="arrow" /></span>}
       </div>
-      <div className="station-shortcuts"><span><PortalIcon name="undo" /><ExaminationFootKey pedal="left" />×2 กลับ</span><span><PortalIcon name="file" /><ExaminationFootKey pedal="right" />×2 คู่มือ</span></div>
+      <div className="station-shortcuts">{!partAdjusting && <span><PortalIcon name="undo" /><ExaminationFootKey pedal="left" />×2 กลับ</span>}</div>
     </nav>
     {!help && !confirmOpen && !panel && devTools}
     <audio ref={audio} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={() => setPlayTime(audio.current?.currentTime ?? 0)} onError={() => setNotice("เปิดเสียงไม่ได้ ลองเลือกช่วงเสียงใหม่", "error", "playback")} />
@@ -506,6 +512,7 @@ export default function ExaminationWorkflow() {
           {choice("ย้อนการแก้ไข", "undo", undo, false, confirmed || !past.length)}
           {choice("ทำซ้ำ", "redo", redo, false, confirmed || !future.length)}
           {choice("พูดคำสั่ง", "workflow", () => { setCommandArmed(true); setPanel(null); }, false, confirmed)}
+          {choice("คู่มือ", "file", () => setHelp(true))}
           {choice("กลับ", "arrow", () => setPanel(null))}
         </div>}
         {panel === "lines" && <div className="station-line-picker">{part.lines.map((line, index) => <button key={line.id} data-pedal-target data-pedal-default={index === 0 ? "" : undefined} aria-label={`แก้บรรทัด ${index + 1}`} onClick={() => { editOrigin.current = "lines"; setEditingLine(line.id); setEntry(line.text); setPanel("edit"); }}><span>{index + 1}</span><span>{line.text}</span><PortalIcon name="edit" /></button>)}</div>}
@@ -528,7 +535,7 @@ export default function ExaminationWorkflow() {
       <div className="station-dialog-heading"><h2 id="station-help-title">คู่มือแป้นเหยียบ</h2><button data-pedal-target data-pedal-default aria-label="ปิดคู่มือ" onClick={() => setHelp(false)}><PortalIcon name="close" />ปิด</button></div>
       {feedback}
       <section className="station-help-content"><ExaminationPedal {...pedalProps} context={context} primaryAction={primaryLabel} presentation={presentation} />
-        <div className="station-help-map"><div><ExaminationFootKey pedal="left" /><p>กด: เลือกก่อนหน้า</p><p>กดสองครั้ง: กลับ</p></div><div><ExaminationFootKey /><p>กด: ทำงาน</p><p>ค้าง: พูด · ปล่อย: หยุด</p></div><div><ExaminationFootKey pedal="right" /><p>กด: เลือกถัดไป</p><p>กดสองครั้ง: คู่มือ</p></div></div>
+        <div className="station-help-map"><div><ExaminationFootKey pedal="left" /><p>กด: เลือกก่อนหน้า</p><p>กดสองครั้ง: กลับ (ยกเว้นตอนเลือก Part)</p></div><div><ExaminationFootKey /><p>กด: ทำงาน</p><p>ค้าง: พูด · ปล่อย: หยุด</p></div><div><ExaminationFootKey pedal="right" /><p>กด: เลือกถัดไป</p></div></div>
         <div className="station-command-list">{voiceInstructions.map(item => <div key={item.label}><span>{item.label}</span><span>{item.example.split(" / ").map(example => <q key={example}>{example}</q>)}</span></div>)}</div>
         <p className="station-sample-note">คำร้องทดลอง 0038 หรือ 0036 · เก็บผลในเครื่องนี้</p><p>ถอดเสียงผ่านเบราว์เซอร์ ยังไม่ใช่ STT ของโรงพยาบาล</p>
       </section><div className="station-help-scroll"><button data-pedal-target onClick={() => helpDialog.current?.querySelector("section")?.scrollBy({ top: -300, behavior: "smooth" })}><PortalIcon name="up" />เลื่อนขึ้น</button><button data-pedal-target onClick={() => helpDialog.current?.querySelector("section")?.scrollBy({ top: 300, behavior: "smooth" })}><PortalIcon name="download" />เลื่อนลง</button></div>

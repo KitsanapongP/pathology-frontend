@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { pedalBindings, pedalForKey, type Pedal, type PedalAction, type PedalContext } from "@/lib/examination-controls";
 import { createExaminationGestures } from "@/lib/examination-gestures";
 
-type Actions = { context: PedalContext; enabled: boolean; confirmFocused: boolean; start: (action: PedalAction) => void; stop: (action: PedalAction, cancelled: boolean) => void; perform: (action: PedalAction) => void };
+type Actions = { context: PedalContext; enabled: boolean; confirmFocused: boolean; partAdjusting: boolean; start: (action: PedalAction) => void; stop: (action: PedalAction, cancelled: boolean) => void; perform: (action: PedalAction) => void };
 
 export function useExaminationPedals(actions: Actions) {
   const latest = useRef(actions);
@@ -22,8 +22,8 @@ export function useExaminationPedals(actions: Actions) {
     controller.current = engine;
     return () => { engine.cancel(); controller.current = null; };
   }, []);
-  useLayoutEffect(() => { controller.current?.cancel(); }, [actions.context]);
-  const press = useCallback((pedal: Pedal, confirmFocused = latest.current.confirmFocused) => { setLastInput("simulator"); controller.current?.press(pedal, latest.current.context, latest.current.enabled, confirmFocused); }, []);
+  useLayoutEffect(() => { controller.current?.cancel(); }, [actions.context, actions.partAdjusting]);
+  const press = useCallback((pedal: Pedal, confirmFocused = latest.current.confirmFocused) => { setLastInput("simulator"); controller.current?.press(pedal, latest.current.context, latest.current.enabled, confirmFocused, latest.current.partAdjusting); }, []);
   const release = useCallback((pedal: Pedal, cancelled = false) => controller.current?.release(pedal, cancelled), []);
   const cancel = useCallback(() => controller.current?.cancel(), []);
 
@@ -36,7 +36,7 @@ export function useExaminationPedals(actions: Actions) {
       event.stopImmediatePropagation();
       if (event.repeat) return;
       setLastInput(Object.values(pedalBindings).some(binding => binding.hardware === event.key) ? "hardware" : "keyboard");
-      controller.current?.press(pedal, latest.current.context, latest.current.enabled, latest.current.confirmFocused);
+      controller.current?.press(pedal, latest.current.context, latest.current.enabled, latest.current.confirmFocused, latest.current.partAdjusting);
     };
     const up = (event: KeyboardEvent) => { const pedal = pedalForKey(event.key); if (pedal) { event.preventDefault(); event.stopImmediatePropagation(); controller.current?.release(pedal); } };
     const hidden = () => { if (document.hidden) cancel(); };
