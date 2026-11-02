@@ -1,36 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import PortalBrand from "./portal-brand";
 import PortalIcon from "./portal-icon";
+import { usePortalLanguage } from "./portal-preferences";
+
+const fontOptions = [
+  { value: 90, label: "ตัวอักษรขนาดเล็ก", size: "small" },
+  { value: 100, label: "ตัวอักษรขนาดปกติ", size: "normal" },
+  { value: 120, label: "ตัวอักษรขนาดใหญ่", size: "large" },
+];
 
 export default function WorkspaceHeader() {
-  const [accountMenu, setAccountMenu] = useState(false);
-  const [notifications, setNotifications] = useState(false);
-  return (
-<header className="workspace-topbar relative z-20 flex min-h-[84px] items-center justify-between gap-4 border-b border-white/60 bg-white/95 px-5 shadow-[0_3px_24px_rgba(31,65,105,0.04)] sm:px-8 lg:px-14">
-        <PortalBrand />
-        <div className="flex shrink-0 items-center gap-3 sm:gap-5">
-          <div className="relative">
-            <button type="button" aria-label="การแจ้งเตือน" aria-expanded={notifications} onClick={() => { setNotifications(!notifications); setAccountMenu(false); }} className="portal-icon-button relative text-[#12346e]">
-              <PortalIcon name="bell" className="size-6" />
-              <span className="absolute right-1 top-0 size-2.5 rounded-full border-2 border-white bg-[#ee4e59]" />
-            </button>
-            {notifications && <div className="portal-dropdown right-0 w-64"><p className="border-b border-[#edf1f7] px-4 py-3 text-sm font-semibold">การแจ้งเตือน</p><p className="px-4 py-4 text-sm leading-6 text-[#7385a1]">ไม่มีการแจ้งเตือนใหม่</p></div>}
-          </div>
-          <div className="h-10 w-px bg-[#d9e2ef]" />
-          <div className="relative">
-            <button type="button" aria-label="เมนูบัญชี Student / Professor" aria-expanded={accountMenu} onClick={() => { setAccountMenu(!accountMenu); setNotifications(false); }} className="flex items-center gap-3 rounded-lg py-2 text-left focus-visible:outline-2 focus-visible:outline-blue-600">
-              <span className="workspace-avatar flex size-11 items-center justify-center overflow-hidden rounded-full bg-[#e1e9f6]">
-                <svg viewBox="0 0 44 44" fill="none" aria-hidden="true" className="size-11"><path d="M5 44c1-11 8-17 17-17s16 6 17 17" fill="#163c76" /><path d="m16 28 6 12 6-12" fill="white" /><path d="M18 23h8v8l-4 4-4-4v-8Z" fill="#e0c3ac" /><path d="M13 14c0-8 18-8 18 0v5c0 7-4 11-9 11s-9-4-9-11v-5Z" fill="#f4e8df" /><path d="M12 16C10 3 33 2 32 16l-6-5c-3 3-8 3-14 2v3Z" fill="#183a6c" /><path d="m20 35 2-2 2 2-1 9h-2l-1-9Z" fill="#8caccb" /></svg>
-              </span>
-              <span className="hidden sm:block"><span className="block text-sm font-semibold">ผู้ใช้งาน</span><span className="mt-0.5 block text-xs text-[#7b8caa]">Student / Professor</span></span>
-              <PortalIcon name="chevron" className="ml-1 size-3.5 rotate-90" />
-            </button>
-            {accountMenu && <div className="portal-dropdown right-0 w-60"><div className="border-b border-[#edf1f7] px-4 py-3"><p className="text-sm font-semibold">ผู้ใช้งาน</p><p className="mt-1 text-xs text-[#8090aa]">Student / Professor</p></div><Link href="/" className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-blue-50"><PortalIcon name="logout" className="size-4" />ออกจากระบบ</Link></div>}
-          </div>
+  const { t, language, fontSize, setLanguage, setFontSize } = usePortalLanguage();
+  return <header className="portal-global-header">
+    <div className="portal-global-topbar">
+      <Link href="/portal" aria-label={t("หน้าแรก")}><PortalBrand /></Link>
+      <div className="portal-preferences">
+        <div className="portal-font-control" role="group" aria-label={t("ขนาดตัวอักษร")}>
+          {fontOptions.map(option => <button key={option.value} type="button" className={`portal-font-option font-${option.size}`} aria-label={t(option.label)} aria-pressed={fontSize === option.value} onClick={() => setFontSize(option.value)}>Aa</button>)}
         </div>
-      </header>
-  );
+        <button type="button" role="switch" aria-label={t("ใช้ภาษาอังกฤษ")} aria-checked={language === "en"} title={t(language === "th" ? "เปลี่ยนเป็นภาษาอังกฤษ" : "เปลี่ยนเป็นภาษาไทย")} className="portal-language-switch" onClick={() => setLanguage(language === "th" ? "en" : "th")}>
+          <span className="portal-language-thumb" aria-hidden="true" />
+          <span className="portal-language-flag" aria-hidden="true"><svg viewBox="0 0 60 40"><path fill="#a51931" d="M0 0h60v40H0z"/><path fill="#fff" d="M0 7h60v26H0z"/><path fill="#2d2a4a" d="M0 13h60v14H0z"/></svg></span>
+          <span className="portal-language-flag" aria-hidden="true"><svg viewBox="0 0 60 40"><path fill="#012169" d="M0 0h60v40H0z"/><path stroke="#fff" strokeWidth="10" d="m0 0 60 40M60 0 0 40"/><path stroke="#c8102e" strokeWidth="4" d="m0 0 60 40M60 0 0 40"/><path stroke="#fff" strokeWidth="13" d="M30 0v40M0 20h60"/><path stroke="#c8102e" strokeWidth="7" d="M30 0v40M0 20h60"/></svg></span>
+        </button>
+        <Link href="/" className="portal-signout"><PortalIcon name="logout" /><span>{t("ออกจากระบบ")}</span></Link>
+      </div>
+    </div>
+  </header>;
 }

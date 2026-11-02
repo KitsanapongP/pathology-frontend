@@ -19,6 +19,6 @@ export function storageItems(kind: StoredItem["kind"]): StoredItem[] {
   }));
 }
 
-export function storageDate(value: string) {
-  return value ? new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value)) : "—";
+export function storageDate(value: string, locale = "th-TH") {
+  return value ? new Intl.DateTimeFormat(locale, { timeZone: "Asia/Bangkok", day: "numeric", month: "short", year: "numeric" }).format(new Date(value)) : "—";
 }
