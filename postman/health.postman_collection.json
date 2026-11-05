@@ -1,0 +1,20 @@
+{
+  "info": {
+    "name": "Pathology - documented health checks",
+    "description": "Only health endpoints documented in the backend handoff. No login body, token flow or business API is assumed. Use a local/test environment and VPN if required. Request business APIs are not implemented yet.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": { "type": "noauth" },
+  "item": [
+    {
+      "name": "Portal health",
+      "request": { "method": "GET", "header": [], "url": "{{portalBaseUrl}}/health" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Health endpoint returns HTTP 200', () => { pm.response.to.have.status(200); });"] } }]
+    },
+    {
+      "name": "Request service health (business APIs pending)",
+      "request": { "method": "GET", "header": [], "url": "{{requestBaseUrl}}/health" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Health endpoint returns HTTP 200', () => { pm.response.to.have.status(200); });"] } }]
+    }
+  ]
+}

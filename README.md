@@ -1,5 +1,11 @@
 # Pathology Frontend
 
+## Docker, GitLab CI and tests
+
+See [development setup](docs/development-setup.md) for local Docker, Vitest,
+Playwright, GitLab CI prerequisites and security boundaries. Postman setup is
+in [postman/README.md](postman/README.md); the real API contract is still required.
+
 ## Public demo on GitHub Pages
 
 Demo URL: https://KitsanapongP.github.io/pathology-frontend/

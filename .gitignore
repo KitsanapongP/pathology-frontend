@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/.npm/
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,6 +13,10 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+/reports/
+/postman/*.local.json
 
 # next.js
 /.next/
@@ -33,6 +38,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
