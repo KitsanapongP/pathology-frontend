@@ -19,16 +19,17 @@ export function matchesRequest(record: RequestRecord, filters: RequestFilters) {
   const day = bangkokDay(receivedDate(record));
   if ((filters.from || filters.to) && !day) return false;
   if ((filters.from && day < filters.from) || (filters.to && day > filters.to)) return false;
-  const identifiers = [record.id, record.hn, field?.an, field?.accessionNumber].filter(Boolean).join(' ');
+  const identifiers = [record.id, record.hn, field?.an, field?.accessionNumber, field?.surgicalNumber].filter(Boolean).join(' ');
   const fields: Record<string, string> = {
     hn: record.hn, an: field?.an ?? '', patient: record.patientName,
-    accession: `${record.id} ${field?.accessionNumber ?? ''}`,
+    accession: field?.accessionNumber ?? '',
+    surgical: field?.surgicalNumber ?? '',
     all: [identifiers, record.patientName, record.sender, record.fileName, field?.ward, field?.hospital,
       field?.requestingDoctor, field?.collector, field?.specimen, field?.clinicalDiagnosis, ...(field?.tests ?? [])].filter(Boolean).join(' '),
   };
   const value = (fields[filters.scope] ?? fields.all).normalize('NFKC').toLocaleLowerCase();
   const tokens = filters.search.normalize('NFKC').trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-  const identifierScope = ['hn', 'an', 'accession'].includes(filters.scope);
+  const identifierScope = ['hn', 'an', 'accession', 'surgical'].includes(filters.scope);
   return tokens.every(token => {
     const identifierToken = token.replace(/[^a-z0-9ก-๙]/g, '');
     return value.includes(token) || (identifierScope && Boolean(identifierToken) && value.replace(/[^a-z0-9ก-๙]/g, '').includes(identifierToken));

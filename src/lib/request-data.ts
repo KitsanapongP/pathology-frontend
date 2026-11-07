@@ -7,6 +7,7 @@ export type OcrStatus = "สแกนแล้ว" | "กำลังดำเ�
 export type ReviewStatus = "รอตรวจสอบ" | "พร้อมใช้งาน" | "ต้องแก้ไข" | "รอผล OCR";
 
 export type RequestRecord = {
+  // Internal record identity; not the printed request number or patient HN.
   id: string;
   category: string;
   sender: string;
@@ -39,7 +40,7 @@ export function initialRequests(): RequestRecord[] {
       patientName: mockPatientName(i),
       uploadedAt: `2026-10-${String(i < 12 ? 16 : Math.max(1, 15 - Math.floor((i - 12) / 4))).padStart(2, "0")}T${i < 12 ? `${String(Math.max(0, 10 - i)).padStart(2, "0")}:${i === 0 ? "24" : "18"}` : "14:20"}:00+07:00`,
       receivedAt: `2026-10-${String(25 - Math.floor(i / 6)).padStart(2, "0")}T${String(10 - i % 6).padStart(2, "0")}:20:00+07:00`,
-      pathology: { accessionNumber: `S69-TEST-${number}`, an: i % 3 === 0 ? `AN-TEST-${number}` : "",
+      pathology: { accessionNumber: `S69-TEST-${number}`, surgicalNumber: i % 4 === 0 ? `SURG-TEST-${number}` : "", an: i % 3 === 0 ? `AN-TEST-${number}` : "",
         age: `${30 + i % 35} ปี`, sex: i % 2 ? "ชาย" : "หญิง", hospital: "โรงพยาบาลสมมติ",
         ward: ["OPD", "Ward A", "Ward B"][i % 3], requestingDoctor: "พญ. อรุณี แพทย์สมมติ",
         collector: "เจ้าหน้าที่สมมติ", collectedAt: "", tests: [examinationOptions[i % examinationOptions.length]],

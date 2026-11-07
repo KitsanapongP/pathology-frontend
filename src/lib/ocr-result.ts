@@ -15,7 +15,10 @@ export const operationOptions = ['Core biopsy', 'Incisional biopsy', 'Excision',
 export const precautionOptions = ['None', 'Contact', 'Blood born', 'Droplet', 'Airborne'] as const;
 export const requirementOptions = ['Margin', 'Tumor necrosis'] as const;
 export const pathologyFields = [
-  ['accessionNumber', 'เลขที่สิ่งส่งตรวจ'], ['an', 'AN'], ['age', 'อายุ'], ['sex', 'เพศ'],
+  // Legacy key: accessionNumber is the business request number (เลขที่สิ่งส่งตรวจ).
+  // Surgical Number is independent and must not be inferred from it or from HN.
+  ['accessionNumber', 'เลขที่สิ่งส่งตรวจ'], ['surgicalNumber', 'Surgical Number'],
+  ['an', 'AN'], ['age', 'อายุ'], ['sex', 'เพศ'],
   ['hospital', 'โรงพยาบาลต้นทาง'], ['ward', 'Ward / OPD'], ['requestingDoctor', 'แพทย์ผู้ส่งตรวจ'],
   ['requestingDoctorPhone', 'โทร. (แพทย์ผู้ส่งตรวจ)'],
   ['collector', 'ผู้เก็บตัวอย่างสิ่งส่งตรวจ'], ['collectorPhone', 'โทร. (ผู้เก็บตัวอย่างสิ่งส่งตรวจ)'],
