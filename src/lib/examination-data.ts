@@ -10,11 +10,11 @@ export function examinationRequests(): ExaminationRequest[] {
 
 export function blankParts(): ExaminationPart[] {
   return [
-    { id: "A", title: "ประวัติและอาการสำคัญ", lines: [] },
-    { id: "B", title: "การตรวจร่างกาย", lines: [] },
-    { id: "C", title: "ผลการตรวจทางห้องปฏิบัติการ", lines: [] },
-    { id: "D", title: "การวินิจฉัยและแผนการรักษา", lines: [] },
-    { id: "E", title: "สรุปและคำแนะนำ", lines: [] },
+    { id: "A", title: "Part A", lines: [] },
+    { id: "B", title: "Part B", lines: [] },
+    { id: "C", title: "Part C", lines: [] },
+    { id: "D", title: "Part D", lines: [] },
+    { id: "E", title: "Part E", lines: [] },
   ];
 }
 

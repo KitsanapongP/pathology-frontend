@@ -2,6 +2,7 @@ export type PortalLanguage = "th" | "en";
 
 // Thai labels remain the canonical record/filter values. Translate presentation only.
 export const english: Record<string, string> = {
+  "ข้อความจากแพทย์ผู้ส่งตรวจ": "Referring doctor's note",
   "ตัวอักษรขนาดเล็ก": "Small text",
   "ตัวอักษรขนาดปกติ": "Normal text",
   "ตัวอักษรขนาดใหญ่": "Large text",

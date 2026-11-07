@@ -68,7 +68,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Portal navigation, language and typography
 
-- `src/app/portal/layout.tsx` owns the single shared `WorkspaceHeader` and `PortalPreferences`. Do not mount another workspace header inside a module. The administration and examination headers retain their page-specific tools.
+- `src/app/portal/layout.tsx` owns `PortalPreferences` and the route-aware `PortalFrame`. `PortalFrame` renders one shared `WorkspaceHeader` on normal portal pages and omits it entirely on `/portal/examinations`. Do not mount another workspace header inside a module. The administration and examination headers retain their page-specific tools.
 - The shared header contains branding and preferences only; do not restore the module navigation bar. Module links live on the portal landing page. Existing `.intake-breadcrumb` trails use shared 1.25rem text and proportionate icons on every module.
 - Preferences use the versioned `pathology:portal-preferences:v1` localStorage key, with Thai/100% server defaults and `useSyncExternalStore` for hydration. Root `lang` and rem font size follow preferences only while the portal is mounted. The header uses three Aa font presets (90%, 100%, 120%), with the selected button marked `aria-pressed`. Legacy 110%/130% preferences map to 100%/120%. Language uses one `role=switch` button with Thai/UK SVG flags; checked means English, and clicking toggles the language.
 - Use rem for text sizing; keep layout/icon dimensions independent. `usePortalLanguage().t` localizes string attributes; `PortalText` localizes rendered UI strings without adding DOM elements. Add translations to `src/lib/portal-language.ts`. Patient names, clinical text and original OCR remain source data.
@@ -78,3 +78,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Module 1 has one always-visible search section with labelled fields. Do not restore a collapsed advanced-filter toggle. Preserve the existing filter semantics and upload dialog.
 - A stale Turbopack development cache has been observed to serve previous CSS after source edits and restarts. Verify computed styles in-browser; if necessary, stop the server and regenerate `.next/dev` before accepting visual QA.
 - Current portal UI checks are recorded in `docs/portal-ui-qa.md`.
+
+## Patient context card
+
+- Examination record/review uses `ExaminationCaseContext` for read-only selected-request details. The existing data model has no prior-examination history; show the unavailable state instead of constructing history from fixtures or current Parts. Keep request ID, examination accession and specimen accession distinct.
+- The desktop workstation has three independent cards: compact patient context, the largest central report, and a narrower shared Biopsy reference. The context card is not part of pedal navigation. Pointer home/help actions occupy free areas at the sides of the existing command rail; preserve the original back hint beneath its central actions.
+
+- Compact workstation typography supersedes the earlier main-screen 22px/18px sizing: context values 1rem, labels .875rem, report 1.125rem, hints 1rem, all respecting portal rem scaling. Short context fields share two columns; prose spans both. The central report fills the remaining desktop width and is wider than either sidebar. All three cards share a viewport-bounded height; each scrolls independently. This supersedes the previous 720px/520px report cap.
+
+## Shared specimen template
+
+- A Part is one separately examined specimen, not a clinical report section. All Parts share the single read-only `ExaminationSpecimenTemplate`, transcribed from the user's blank biopsy form. Do not auto-fill, append its text to dictation, or infer specimen Parts from container count. Legacy saved draft contents/IDs must be preserved; display only Part A–E headings rather than old clinical-section titles or specimen captions. The right reference card is not a pedal target. Biopsy is a shared reference with no active-Part label. Its six numbered sections and individually tinted, read-only choices have stable data-template-section/data-template-choice identifiers for future per-Part speech coverage. Do not mark coverage complete until a real matcher exists.
+- Omit empty optional patient-context rows/groups instead of repeating field labels with ไม่ระบุ. Keep an explicit missing-clinical-information state and unavailable-prior-history state. Do not restore the removed “(มากกว่า 1 ขวด)” note or active-Part caption on Biopsy.
+- Examination is a focused workstation with no shared portal header or duplicate footer row. Keep home/help centered in the existing rail's left/right free areas, preserve the separate left-double-tap back hint, and save pending report changes before home navigation. Do not reintroduce branding/preferences/sign-out here; they remain on portal home.
+
+- Development-only case reset is under the simulator's collapsed test-data section for the selected request. It waits for queued writes, cancels pending autosave, and atomically backs up that one stored draft under `__reset_backup__:<requestId>` before removing the live draft. Restore copies that backup back to the original request ID. Neither action is a pedal target or available in production; never clear the entire IndexedDB database.
+
+- Desktop lookup keeps the search form in an unchanged central grid column; result details use the shared context card to its left. Reserve readiness/error space to prevent horizontal and vertical search-form shifts. Fixture 0038 long-form clinical/referral data lives in `request-demo-0038.ts`; mark fixture provenance with `isMock`. `referralNote` is an optional multiline frontend field, not an established backend OCR field. Never copy mock request prose into a dictated report or alter an existing saved draft to populate it.

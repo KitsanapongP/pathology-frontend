@@ -131,3 +131,54 @@
 - Production build เคยติดการเริ่ม CSS worker ของ Turbopack; รอบนี้ไม่ได้รันซ้ำและไม่อ้างว่า build ผ่าน
 
 สเปกปุ่มและแต่ละขั้นอยู่ใน `examinations-interaction-spec.md` เวอร์ชัน 2.5
+
+## Patient context layout — 7 November 2026
+
+- Browser checked the existing confirmed fixture 0038 without editing or confirming its draft. Removed the examination branding row; shared portal branding remains. Corner help opens/closes the existing dialog.
+- Checked 1896×1244 with the simulator open: patient context and report occupy separate columns, with space on the right for a future panel. The simulator remains an overlay.
+- Checked 1280×720 after the final height adjustment: page height equals the viewport, no horizontal overflow, report/context have independent scrolling, and the bottom actions and corner help remain visible. Context contains zero pedal targets.
+- Empty clinical fields are labelled ไม่ระบุ; prior examination history is explicitly not connected. No backend or history data was added.
+- Typecheck, changed-component ESLint, all 24 examination tests and all 4 Vitest unit tests passed after installing the dependencies introduced by the GitHub update. The committed lockfile was preserved.
+- Production build failed while starting the Turbopack CSS worker, both inside and outside the sandbox (station.css/globals.css). No successful production build is claimed. Hardware, microphone and real STT were not tested in this pass.
+
+## Compact workstation refinement — 7 November 2026
+
+- Browser checked the existing confirmed 0038 draft without writing or confirming it. At 1896×1244 the context is 420px wide; the report is 720×520px. Default computed context values/labels are 16px/14px; transcript text is 18px.
+- Two-column identifiers, origin/doctor and short specimen fields reduce vertical scanning; prose remains full-width. Hospital/doctor now follows reference numbers. No fields were removed or history invented.
+- At 1280×720 the final layout has no horizontal overflow and page height equals viewport height; the action rail and corner help remain visible. Restored the viewport override after checking.
+- Typecheck and component ESLint passed. This refinement changes presentation only; pedal, dictation and persistence behavior is unchanged. The previously recorded Turbopack production-build limitation remains unresolved; no successful build is claimed in this pass.
+
+## Shared biopsy reference — 8 November 2026
+
+- Read the attached blank form visually and transcribed its reusable biopsy wording, alternatives and blanks. Added a single right reference card for record/review; selecting Part B updates the heading while retaining the same template body. All report headings now describe specimens, including an existing draft with old clinical-section titles.
+- Browser checked existing confirmed fixture 0038 without changing or confirming report data. At 1896×1244 checked with simulator open, then switched A to B through Part adjustment. At 1280×720 the three cards remain within the viewport width and the reference text scrolls independently. Restored viewport override afterwards.
+- Browser DOM confirms exactly one reference card and zero pedal targets within it. No automatic template insertion or specimen/container count inference was added. Final proportions have deliberately not been settled.
+- Typecheck, changed-file ESLint and all 24 examination tests passed. Hardware, microphone and real STT were not tested. Production build was not rerun; the prior Turbopack CSS-worker limitation remains recorded.
+
+## Final three-column layout and label audit — 8 November 2026
+
+- Removed specimen captions from all Part headings and removed the active-Part caption and “(มากกว่า 1 ขวด)” note from Biopsy. Biopsy and Surgical number share a single header row.
+- Six numbered template sections preserve dictation order and source terms; 34 pale indigo alternatives/optional phrases are visually distinct from the sentence scaffold. Blanks have dotted underlines and accessible value labels. Stable section/choice attributes support a future matcher; no speech-coverage state is fabricated and the reference remains outside the pedal target cycle.
+- Removed empty optional context rows/groups. Kept one explicit missing-clinical-information message and the distinct unavailable-history message. Required patient identity and all populated source values remain.
+- Browser checked existing confirmed case 0038 without modifying/confirming report contents. At 1896×1244 widths are 320/1029/420px for patient/report/template; the central report is largest and all cards align. Checked with simulator open (still an overlay). At 1280×720 final widths are 280/568/320px, page height equals viewport height and there is no horizontal overflow. Identifier values remain readable in two columns. Reset viewport override afterwards.
+- Typecheck, changed-file ESLint and all 24 examination tests passed. Corrected a temporary CSS selector typo found by the browser; the final page renders without a build-error overlay. Production build was not rerun; the prior CSS-worker limitation remains unresolved. No real microphone/STT/hardware test was performed.
+
+## Focused shell and separate home action — 8 November 2026
+
+- Removed portal branding/preferences/sign-out from examination only; no extra footer row. Shared header remains on portal home and other modules, using route-aware `PortalFrame`.
+- Home and help now occupy left/right free areas of the existing command rail. Restored/preserved the original left-double-tap back example, independently from home navigation. Both new pointer controls are excluded from pedal selection.
+- Browser verified home from existing confirmed fixture 0038 navigates to `/portal`, where branding/preferences/sign-out return, and entering examination removes them again. No report edits or finalization were performed. Home's unsaved-save/failure branch was inspected in code, not forced by corrupting browser storage.
+- Checked 1896×1244 and 1280×720. At 1280×720 the report gains about 109px vertical space versus the prior 420px card, there is no page overflow, and home/help centers both measure y=641.8px within the same rail. Header count is zero; the original ×2 กลับ instruction remains visible. Help opens/closes its existing dialog. Reset viewport after checking.
+- Typecheck, changed-file ESLint and all 24 examination tests passed. Production build was not rerun; prior Turbopack CSS-worker limitation remains. No real hardware/STT was tested.
+
+## User-requested reset of 0038 — 8 November 2026
+
+- User explicitly requested resetting local case 0038. Both open user tabs were on standby, so neither held active report edits. Opened only REQ-2569-0038, used the development reset control, and observed the state change from confirmed/open-report to พร้อมเริ่มบันทึกผล / เริ่มบันทึก. Closed the simulator and left the case ready to start; did not begin recording or confirm a report.
+- The original IndexedDB draft is retained under a request-specific backup key for the restore control. Other requests were not cleared. Reset was exercised in the browser; restore was not executed because it would undo the user's requested reset.
+
+## Stable lookup with long clinical fixture — 8 November 2026
+
+- Browser checked fixture 0038 on the case/lookup screen, without entering recording, changing dictated text or confirming a report. It remains พร้อมเริ่มบันทึกผล after the earlier user-requested reset.
+- At 1896×1244 search form before/after successful lookup had identical x/y/width; its center equals viewport center (948px). Left context card is independently scrollable, has zero foot targets, and renders the multi-paragraph referring-doctor note (945 characters) plus other clinical/specimen data. Checked with simulator open; it does not move the lookup.
+- At 1280×720 search form stayed at x=336, y=115.14, width=608 before and after a match; failed lookup also produced x/y shift zero. Page height equals 720 and there is no horizontal overflow. Restored 0038 after the failed-search check, closed simulator and reset viewport override.
+- All 24 examination tests and 4 unit tests, TypeScript and changed-file lint passed. Production build was not rerun; prior Turbopack CSS-worker limitation remains. Real STT/hardware not tested.

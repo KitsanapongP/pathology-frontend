@@ -114,3 +114,50 @@ Feedback แยก error/success/info และอยู่ในบริบท
 | src/app/portal/examinations/station.css | layout/typography ใหม่แทน CSS สะสม UI1.x |
 
 `npm run typecheck`, `npm run lint -- <changed paths>`, `npm run test:examinations` เป็น non-interactive ดูผล browser จริงและข้อจำกัดใน examinations-qa.md ไม่อ้างว่า STT/hardware จริงหรือ production build ผ่านจาก unit tests
+
+## Patient context layout (7 November 2026)
+
+- Removed the examination-only branding header; the shared portal header remains. Pointer help is at bottom right, beside the development overlay; existing bounded pedal help actions remain available.
+- Record/review uses a left patient-context card and a narrower central report. At >=1700px a third column remains empty for a future panel; below that, both existing cards use the available width. Mobile stacks the cards. Patient details and report scroll independently.
+- Context displays the selected request's patient identity, separate request/examination/specimen identifiers, specimen and procedure, clinical information, referring hospital/doctor, collection and additional requirements. Empty fields say ไม่ระบุ. Prior reports are explicitly unavailable until a history API is connected; never derive history from other fixtures or current report Parts.
+- Context and corner help do not join the pedal target cycle. Preserve the distinct synthetic examination accession and specimen accession until their API semantics are agreed.
+
+## Compact workstation refinement (7 November 2026)
+
+- The central transcript is capped at 720px wide and 520px high on desktop (short viewports reduce its height). It remains scrollable; dictation, auto-follow and review behavior are unchanged.
+- Context uses a 400–420px desktop card, two columns for short fields and full-width rows for clinical prose/specimen descriptions. Referring hospital/doctor appears immediately after identifiers. Card values use 1rem, labels .875rem, report text 1.125rem, report title 1.375rem and station hints 1rem at the default portal preset. This supersedes the earlier 22px content/18px hint requirement for the main workstation; preserve rem scaling and accessibility labels.
+- Reduce vertical gaps/padding and rail button height to show more patient information without changing the bounded pedal actions. Shared portal preferences and other modules retain their existing typography.
+
+## Shared biopsy reference template — 8 November 2026
+
+- Each Part A–E represents a separate specimen, not a different clinical report section. All Parts use the same biopsy reference text. Existing per-Part transcript/audio IDs and draft contents are preserved; rendered headings ignore the legacy clinical-section titles retained in old saved drafts.
+- `ExaminationSpecimenTemplate` appears once on the right during record/review; its heading follows the selected Part. The image-supplied blank template was transcribed with slash-separated alternatives and measurement/submission blanks, including Surgical number, container count and the Biopsy note. No specimen values are automatically filled and the reference is never appended to dictated text.
+- Part A alone may contain the case's report; additional Parts are available for separately examined specimens. Empty Parts do not require dictation. Do not infer the Part count from bag/container count or assume every Part must be used.
+- The reference is read-only and excluded from bounded pedal targets. It scrolls independently. At <=1100px it follows the other cards; otherwise it occupies the third column. These are provisional placement rules; final card proportions are pending user review.
+
+## Three-column reading hierarchy — 8 November 2026
+
+- Display only Part A–E in report headings; the Biopsy reference has no Part designation and does not change with Part selection. Existing saved content, IDs and audio remain intact.
+- The central report is the largest card. Desktop columns are compact patient context (280–320px), remaining width for the report, and shared Biopsy (300–420px). All three are aligned at the top with the same viewport-bounded height. This supersedes the earlier fixed 720×520 report cap and provisional third-column rules. Below 1100px Biopsy follows the first two cards; mobile stacks all cards.
+- Biopsy and Surgical number share the card header. Six ordered sections guide dictation: containers, receipt/quantity, appearance, measurements, sampling and submission. Plain text is the sentence scaffold; pale indigo chips are alternatives/optional phrases, dotted blanks are values to dictate. These chips are read-only reference text, not controls or selected/completed states.
+- Stable data-template-section and data-template-choice attributes identify speech-coverage destinations for future implementation. No keyword matching or completed-state display exists yet; coverage must be tracked per Part when introduced, while the reference wording stays shared. Preserve every source alternative and unit.
+- Removed the source form note “(มากกว่า 1 ขวด)” from the Biopsy header at the user’s request; it carries no instruction needed by this interface.
+- Patient context omits empty optional rows and entire empty optional groups, so labels without values do not consume scanning space. If all clinical-information fields are absent, show one explicit absence message; retain the distinct unavailable prior-history message.
+
+## Focused examination shell — 8 November 2026
+
+- `/portal/examinations` omits the shared portal header entirely: no branding, language/font controls or sign-out in this workstation. Do not move them into an extra footer row. Portal preferences remain active and can be changed from the portal home page.
+- Home and help are pointer controls in the unused left/right areas of the existing command rail, vertically centered relative to that rail. They do not join the bounded pedal target cycle. Preserve the exact left-double-tap back instruction beneath the central pedal controls; home navigation is a separate action.
+- Home waits for a pending/unsaved hydrated report to save, blocks during voice/loading, and stays on the page if saving fails. It never confirms or finalizes a report. Keep explicit context back and home navigation distinct.
+- On desktop, flex/grid allocate the remaining viewport height to the three cards, without a fixed header-height deduction or extra footer. On narrow screens the cards stack/scroll normally.
+
+## Reversible fixture reset — 8 November 2026
+
+Development-only simulator has a collapsed selected-case data section with reset and restore controls, excluded from foot selection. Reset waits for in-flight saves and cancels pending autosave; the selected request's stored draft is backed up and removed in one IndexedDB transaction. Restore uses the same backup. Other requests are untouched. This does not change OCR/review eligibility or confirm a report.
+
+## Stable lookup and detailed fixture 0038 — 8 November 2026
+
+- Standby and case use the same symmetric three-column lookup grid on desktop. The search occupies the central column before and after lookup; selected-request details appear only in the left column using the same `ExaminationCaseContext` as record/review. Readiness and failed-search slots reserve fixed space so feedback does not move the form. Do not recenter the form around the combined width of search plus card.
+- The left card scrolls independently and contains all populated request details. Pre-record lookup does not display a draft-save footer, because lookup itself is not a saved report. At <=1100px the search remains in a fixed first row and the details follow below for available width.
+- Fixture 0038 now has entirely authored clinical history, a long referring-doctor note, radiographic findings, specimen collection details, clinical suspicion and appointment information. It remains a fictional request, visibly identified by `isMock`; none of these values were extracted from a real patient document or written into the examination transcript.
+- `pathology.referralNote` is an optional frontend draft field, rendered and edited as multiline text; it is not a claim that the pending OCR/backend contract provides that property. Keep the long fixture in `request-demo-0038.ts` so its chronology and narrative can be maintained together. Do not infer Parts from its single container.
