@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 
 function Choices({ id, options }: { id: string; options: readonly string[] }) {
-  return <span className="station-template-choices" role="group" aria-label="ตัวเลือก">{options.map(option => <span className="station-template-choice" data-template-choice={`${id}:${option}`} key={option}>{option}</span>)}</span>;
+  return <span className="station-template-choices" role="group" aria-label="ตัวเลือก">{options.map((option, index) => <Fragment key={option}>{index > 0 && <span className="station-template-separator" aria-hidden="true"> / </span>}<span className="station-template-choice" data-template-choice={`${id}:${option}`}>{option}</span></Fragment>)}</span>;
 }
 
 function Blank({ label }: { label: string }) {

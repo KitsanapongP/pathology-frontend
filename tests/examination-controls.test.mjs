@@ -71,13 +71,18 @@ test("right taps are immediate and left taps retain the back window", () => {
   r.press("left", "record"); r.release("left"); r.advance(350);
   assert.deepEqual(r.events, [["perform", "nextControl"], ["perform", "previousControl"]]);
 });
-test("finalization requires the actual confirmation target and a full new hold", () => {
-  const r = rig(); r.press("center", "confirm", true, true); r.advance(1499); r.release("center"); assert.deepEqual(r.events, []);
-  r.press("center", "confirm", true, true); r.advance(1500); assert.deepEqual(r.events, []); r.release("center");
-  assert.deepEqual(r.events, [["perform", "confirm"]]);
-  const cancel = rig(); cancel.press("center", "confirm", true, false); cancel.advance(1500); cancel.release("center");
-  assert.deepEqual(cancel.events, [["start", "speak"], ["stop", "speak", false]]);
+test("finalization requires the actual target and a fresh right hold; center remains speech", () => {
+  const r = rig(); r.press("right", "confirm", true, true); r.advance(2999); r.release("right");
+  assert.deepEqual(r.events, [["perform", "nextControl"]]);
+  r.press("right", "confirm", true, true); r.advance(3000);
+  assert.equal(r.events.length, 1); r.release("right");
+  assert.deepEqual(r.events, [["perform", "nextControl"], ["perform", "confirm"]]);
+  const unfocused = rig(); unfocused.press("right", "confirm", true, false); unfocused.advance(3000); unfocused.release("right");
+  assert.deepEqual(unfocused.events, [["perform", "nextControl"]]);
+  const center = rig(); center.press("center", "confirm", true, true); center.advance(3000); center.release("center");
+  assert.deepEqual(center.events, [["start", "speak"], ["stop", "speak", false]]);
 });
+
 test("cancel before threshold prevents mic start, while cancel during speech stops it", () => {
   const r = rig(); r.press("center", "standby"); r.advance(249); r.cancel(); r.advance(2000); assert.deepEqual(r.events, []);
   r.press("center", "record"); r.advance(250); r.cancel(); r.release("center");
@@ -99,8 +104,8 @@ test("instructions show field-specific speech and confirmation only for its targ
   assert.match(examinationPedalInstructions("standby", "")[1].steps[1].result, /เลขคำร้อง/);
   assert.match(examinationPedalInstructions("case", "")[1].steps[1].result, /เลขคำร้อง/);
   assert.match(examinationPedalInstructions("review", "", { voiceLabel: "แก้บรรทัดที่เลือก" })[1].steps[1].result, /แก้บรรทัด/);
-  assert.doesNotMatch(examinationPedalInstructions("confirm", "")[1].steps[0].gesture, /1\.5/);
-  assert.match(examinationPedalInstructions("confirm", "", { confirmFocused: true })[1].steps[0].gesture, /1\.5/);
+  assert.doesNotMatch(examinationPedalInstructions("confirm", "")[1].steps[0].gesture, /3/);
+  assert.match(examinationPedalInstructions("confirm", "", { confirmFocused: true })[2].steps[1].gesture, /3/);
 });
 test("hardware aliases, keyboard aliases and spoken Thai digits are supported", () => {
   for (const [key, pedal] of [["F13", "left"], ["F14", "center"], ["F15", "right"], ["F8", "left"], ["F9", "center"], ["F10", "right"]]) assert.equal(pedalForKey(key), pedal);
@@ -211,4 +216,24 @@ test("rapid Part steps never trigger back or help and center only exits adjustme
   assert.deepEqual(r.events, [["perform", "activate"]]);
   const hints = examinationPedalInstructions("record", "", { adjusting:true, partAdjusting:true });
   assert.equal(hints[0].steps.length, 1); assert.equal(hints[2].steps.length, 1);
+});
+
+
+test("Part completion uses right hold while center still dictates and right tap still navigates", () => {
+  for (const context of ["record", "review"]) {
+    const r = rig();
+    r.press("right", context, true, false, false, true); r.advance(2999); r.release("right");
+    assert.deepEqual(r.events, [["perform", "nextControl"]]);
+    r.press("right", context, true, false, false, true); r.advance(3000);
+    assert.equal(r.events.length, 1); r.release("right");
+    assert.deepEqual(r.events, [["perform", "nextControl"], ["perform", "completePart"]]);
+    const cancelled = rig();
+    cancelled.press("right", context, true, false, false, true); cancelled.advance(4000); cancelled.cancel(); cancelled.release("right");
+    assert.deepEqual(cancelled.events, []);
+    const center = rig();
+    center.press("center", context, true, false, false, true); center.advance(4000); center.release("center");
+    assert.deepEqual(center.events, [["start", "speak"], ["stop", "speak", false]]);
+    const plain = rig(); plain.press("right", context); plain.advance(4000); plain.release("right");
+    assert.deepEqual(plain.events, [["perform", "nextControl"]]);
+  }
 });

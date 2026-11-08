@@ -27,6 +27,8 @@ export function useExaminationVoice(callbacks: Callbacks, scope: string) {
   const [destination, setDestination] = useState<Mode | null>(null);
   const [interim, setInterim] = useState("");
   const [seconds, setSeconds] = useState(0);
+  const [capturing, setCapturing] = useState(false);
+  const [inputStream, setInputStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState("");
   const [completed, setCompleted] = useState<{ token: number; mode: Mode; text: string; partId: string } | null>(null);
   const delivered = useRef(0);
@@ -49,7 +51,7 @@ export function useExaminationVoice(callbacks: Callbacks, scope: string) {
     Promise.resolve().then(() => {
       if (mounted.current) {
         setSupport({ speech: supportsSpeechPreview(), microphone: typeof navigator.mediaDevices?.getUserMedia === "function" && typeof MediaRecorder !== "undefined" });
-        if (!active.current) { setMode(null); setInterim(""); }
+        if (!active.current) { setMode(null); setInterim(""); setCapturing(false); setInputStream(null); }
       }
     });
     const timer = window.setInterval(() => {
@@ -60,7 +62,7 @@ export function useExaminationVoice(callbacks: Callbacks, scope: string) {
       active.current = null; recognition.current?.abort();
       if (media.current?.state === "recording") media.current.stop();
       stream.current?.getTracks().forEach(track => track.stop());
-      setMode(null); setInterim("");
+      setMode(null); setInterim(""); setCapturing(false); setInputStream(null);
     };
     const hidden = () => { if (document.hidden) cancelCapture(); };
     window.addEventListener("blur", cancelCapture); document.addEventListener("visibilitychange", hidden);
@@ -80,7 +82,7 @@ export function useExaminationVoice(callbacks: Callbacks, scope: string) {
   function startRecognition(session: NonNullable<typeof active.current>) {
     const next = createSpeechPreview({
       captureStart: () => {
-        if (mounted.current && active.current === session && !session.cancelled) setMode(session.mode);
+        if (mounted.current && active.current === session && !session.cancelled && session.mode !== "dictation") setMode(session.mode);
       },
       captureEnd: () => {
         if (mounted.current && active.current === session && !session.cancelled && session.mode !== "dictation") setMode("processing");
@@ -107,6 +109,7 @@ export function useExaminationVoice(callbacks: Callbacks, scope: string) {
         if (active.current === session) active.current = null;
         if (media.current?.state === "recording") { session.ended = Date.now(); media.current.stop(); }
         stream.current?.getTracks().forEach(track => track.stop());
+        if (sessionRef.current === session) { setCapturing(false); setInputStream(null); }
         if (!active.current) { setMode(media.current ? "processing" : null); setInterim(""); }
       },
     });
@@ -135,14 +138,20 @@ export function useExaminationVoice(callbacks: Callbacks, scope: string) {
       acquired = input;
       if (active.current !== session || session.cancelled || !mounted.current) { input.getTracks().forEach(track => track.stop()); return; }
       stream.current = input;
+      setInputStream(input);
       const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find(value => MediaRecorder.isTypeSupported(value));
       const recorder = new MediaRecorder(input, mime ? { mimeType: mime } : undefined);
       const chunks: Blob[] = [];
+      recorder.onstart = () => {
+        if (!mounted.current || active.current !== session || session.cancelled) { if (recorder.state === "recording") recorder.stop(); return; }
+        session.started = Date.now(); setCapturing(true); setMode("dictation");
+      };
       recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
       recorder.onstop = () => {
         input.getTracks().forEach(track => track.stop());
         if (media.current === recorder) media.current = null;
         if (!mounted.current) return;
+        if (sessionRef.current === session) { setCapturing(false); setInputStream(null); }
         const blob = new Blob(chunks, { type: recorder.mimeType });
         if (blob.size && !session.cancelled) latest.current.clip({ id: crypto.randomUUID(), partId, seconds: Math.max(.1, ((session.ended ?? Date.now()) - session.started) / 1000), blob });
         if (!recognition.current && !active.current) setMode(null);
@@ -150,15 +159,15 @@ export function useExaminationVoice(callbacks: Callbacks, scope: string) {
       recorder.onerror = () => {
         input.getTracks().forEach(track => track.stop());
         session.cancelled = true; active.current = null; recognition.current?.abort();
-        if (mounted.current) { setMode(null); latest.current.notice("การอัดเสียงขัดข้อง กรุณาลองใหม่"); }
+        if (mounted.current) { setMode(null); setCapturing(false); setInputStream(null); latest.current.notice("การอัดเสียงขัดข้อง กรุณาลองใหม่"); }
       };
-      media.current = recorder; session.started = Date.now(); recorder.start(500); setMode("dictation");
+      media.current = recorder; session.started = Date.now(); recorder.start(500);
       startRecognition(session);
     } catch {
       acquired?.getTracks().forEach(track => track.stop());
       if (active.current === session) {
         active.current = null;
-        if (mounted.current) { setMode(null); latest.current.notice("เปิดไมโครโฟนไม่ได้ กรุณาตรวจสอบสิทธิ์และลองเหยียบใหม่"); }
+        if (mounted.current) { setMode(null); setCapturing(false); setInputStream(null); latest.current.notice("เปิดไมโครโฟนไม่ได้ กรุณาตรวจสอบสิทธิ์และลองเหยียบใหม่"); }
       }
     }
   }
@@ -174,6 +183,7 @@ export function useExaminationVoice(callbacks: Callbacks, scope: string) {
     active.current = null;
     if (media.current?.state === "recording") media.current.stop();
     stream.current?.getTracks().forEach(track => track.stop());
+    setCapturing(false); setInputStream(null);
     if (recognition.current) {
       setMode("processing");
       if (cancelled) recognition.current.abort(); else recognition.current.stop();
@@ -182,5 +192,5 @@ export function useExaminationVoice(callbacks: Callbacks, scope: string) {
       }, 6000);
     } else { setMode(media.current ? "processing" : null); setInterim(""); }
   }
-  return { start, stop, mode, destination, interim, seconds, support, error };
+  return { start, stop, mode, destination, interim, seconds, support, error, capturing, inputStream };
 }

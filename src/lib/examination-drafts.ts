@@ -1,7 +1,7 @@
 import type { ExaminationPart } from "./examination-data";
 
 export type ExaminationClip = { id: string; partId: string; seconds: number; blob: Blob };
-export type ExaminationDraft = { version: 2; requestId: string; parts: ExaminationPart[]; clips: ExaminationClip[]; confirmed: boolean; savedAt: string };
+export type ExaminationDraft = { version: 2; requestId: string; parts: ExaminationPart[]; clips: ExaminationClip[]; confirmed: boolean; savedAt: string; visiblePartIds?: string[]; completedPartIds?: string[] };
 
 function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {

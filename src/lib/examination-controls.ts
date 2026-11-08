@@ -3,15 +3,15 @@ export type Pedal = "left" | "center" | "right";
 export type ExaminationScreen = "standby" | "case" | "record" | "review" | "complete";
 export type ExaminationPanel = "results" | "parts" | "voice" | "tools" | "lines" | "entry" | "edit" | "playback";
 export type PedalContext = ExaminationScreen | ExaminationPanel | "help" | "confirm";
-export type PedalAction = "previousControl" | "nextControl" | "activate" | "speak" | "back" | "help" | "confirm";
+export type PedalAction = "previousControl" | "nextControl" | "activate" | "speak" | "back" | "help" | "confirm" | "completePart";
 export type PedalBinding = { tap?: PedalAction; hold?: PedalAction; doubleTap?: PedalAction; minimumHoldMs?: number; holdDelayMs?: number };
-export type PedalPresentation = { voiceLabel?: string; confirmFocused?: boolean; adjusting?: boolean; partAdjusting?: boolean };
+export type PedalPresentation = { voiceLabel?: string; confirmFocused?: boolean; completePartFocused?: boolean; adjusting?: boolean; partAdjusting?: boolean };
 export const pedalBindings = {
-  left: { title: "ซ้าย", position: "ซ้าย", hardware: "F13", keyboard: "F8", color: "#158575" },
-  center: { title: "กลาง", position: "กลาง", hardware: "F14", keyboard: "F9", color: "#5178c7" },
-  right: { title: "ขวา", position: "ขวา", hardware: "F15", keyboard: "F10", color: "#a27b42" },
+  left: { title: "ซ้าย", position: "ซ้าย", hardware: "F13", keyboard: "F8", color: "#158575", highlightColor: "#c45c13" },
+  center: { title: "กลาง", position: "กลาง", hardware: "F14", keyboard: "F9", color: "#5178c7", highlightColor: "#2563eb" },
+  right: { title: "ขวา", position: "ขวา", hardware: "F15", keyboard: "F10", color: "#a27b42", highlightColor: "#9333ea" },
 } as const;
-export const pedalTiming = { doubleTapMs: 350, voiceHoldMs: 250, confirmHoldMs: 1500 };
+export const pedalTiming = { doubleTapMs: 350, voiceHoldMs: 250, confirmHoldMs: 3000 };
 export const examinationSteps = ["ระบุคำร้อง", "บันทึกผล", "ตรวจสอบและยืนยัน"];
 
 // Controller and all instruction surfaces resolve this same per-screen map.
@@ -24,8 +24,9 @@ export const examinationPedalMap: Record<PedalContext, Record<Pedal, PedalBindin
   (["standby", "case", "record", "review", "complete", "help", "confirm", "results", "parts", "voice", "tools", "lines", "entry", "edit", "playback"] as PedalContext[]).map(context => [context, navigationMap]),
 ) as Record<PedalContext, Record<Pedal, PedalBinding>>;
 
-export function resolvePedalBinding(context: PedalContext, pedal: Pedal, confirmFocused = false, partAdjusting = false): PedalBinding {
-  if (context === "confirm" && pedal === "center" && confirmFocused) return { hold: "confirm", minimumHoldMs: pedalTiming.confirmHoldMs };
+export function resolvePedalBinding(context: PedalContext, pedal: Pedal, confirmFocused = false, partAdjusting = false, completePartFocused = false): PedalBinding {
+  if (context === "confirm" && pedal === "right" && confirmFocused) return { tap: "nextControl", hold: "confirm", minimumHoldMs: pedalTiming.confirmHoldMs };
+  if ((context === "record" || context === "review") && pedal === "right" && completePartFocused) return { tap: "nextControl", hold: "completePart", minimumHoldMs: pedalTiming.confirmHoldMs };
   if (partAdjusting) return { tap: pedal === "left" ? "previousControl" : pedal === "right" ? "nextControl" : "activate" };
   return examinationPedalMap[context][pedal];
 }
@@ -35,19 +36,19 @@ export function examinationPedalInstructions(context: PedalContext, _primaryActi
   const voiceLabel = presentation.voiceLabel ?? (context === "standby" || context === "case" ? "พูดเลขคำร้อง" : context === "record" ? "บอกผลตรวจ" : "พูดคำสั่ง");
   const backLabel = presentation.adjusting ? "จบการปรับค่า" : context === "help" ? "ปิดคู่มือ" : context === "confirm" ? "ยกเลิกการยืนยัน" : context === "standby" ? "ล้างการค้นหา" : "กลับหน้าก่อน";
   const confirming = context === "confirm" && presentation.confirmFocused;
+  const completingPart = (context === "record" || context === "review") && presentation.completePartFocused;
   return [
     { pedal: "left", action: "เลื่อนกรอบ", icon: "undo", steps: [
       { gesture: "กด 1 ครั้ง", result: presentation.adjusting ? "ลดค่า" : "เลือกรายการก่อนหน้า" },
       ...(!presentation.partAdjusting ? [{ gesture: "กด 2 ครั้งเร็ว ๆ", result: backLabel }] : []),
     ] },
-    { pedal: "center", action: confirming ? "ยืนยันผลตรวจ" : "กดปุ่มที่เลือก", icon: confirming ? "check" : "microphone", steps: confirming ? [
-      { gesture: `ค้าง ${pedalTiming.confirmHoldMs / 1000} วินาที`, result: "ยกเท้าเพื่อยืนยันผล" },
-    ] : [
+    { pedal: "center", action: "กดปุ่มที่เลือก", icon: "microphone", steps: [
       { gesture: "กด 1 ครั้ง", result: presentation.adjusting ? "จบการปรับค่า" : "กดปุ่มในกรอบเขียว" },
       ...(!presentation.partAdjusting ? [{ gesture: "เหยียบค้าง", result: voiceLabel }, { gesture: "ยกเท้า", result: "หยุดรับเสียง" }] : []),
     ] },
     { pedal: "right", action: "เลื่อนกรอบ", icon: "arrow", steps: [
       { gesture: "กด 1 ครั้ง", result: presentation.adjusting ? "เพิ่มค่า" : "เลือกรายการถัดไป" },
+      ...(confirming || completingPart ? [{ gesture: `ค้าง ${pedalTiming.confirmHoldMs / 1000} วินาที`, result: completingPart ? "ยกเท้าเพื่อบันทึก Part" : "ยกเท้าเพื่อยืนยันผล" }] : []),
     ] },
   ];
 }

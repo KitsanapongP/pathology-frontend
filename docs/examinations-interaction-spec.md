@@ -22,7 +22,7 @@
 
 แตะคู่มีช่วงตรวจจับ 350ms; เฉพาะซ้ายที่อยู่นอกโหมดปรับ Part จึงรอช่วงนี้ ขวาตอบสนองทันที กลางกดสั้นไม่เปิดไมค์ คีย์ repeat ไม่เริ่มงานซ้ำ เปลี่ยน context/blur/ซ่อนแท็บยกเลิก gesture ที่ค้างและ action ที่รอ ไม่ให้ข้ามไปทำงานในบริบทใหม่
 
-ข้อยกเว้น: เมื่อเลือกปุ่มยืนยันผลใน dialog ยืนยัน กลางต้องค้าง **1.5 วินาทีแล้วปล่อย** จึงยืนยัน ไม่เปิดไมค์ กลางกดสั้นไม่ยืนยัน ปุ่มยืนยันที่กด pointer โดยตรงเลือกตัวเองก่อนเริ่ม hold
+ข้อยกเว้น: เมื่อเลือกปุ่มยืนยันผลใน dialog ยืนยัน ขวาต้องค้าง **3 วินาทีแล้วปล่อย** จึงยืนยัน ไม่เปิดไมค์ กลางกดสั้นไม่ยืนยัน ปุ่มยืนยันที่กด pointer โดยตรงเลือกตัวเองก่อนเริ่ม hold
 
 ## วงคำสั่งของแต่ละหน้า
 
@@ -161,3 +161,31 @@ Development-only simulator has a collapsed selected-case data section with reset
 - The left card scrolls independently and contains all populated request details. Pre-record lookup does not display a draft-save footer, because lookup itself is not a saved report. At <=1100px the search remains in a fixed first row and the details follow below for available width.
 - Fixture 0038 now has entirely authored clinical history, a long referring-doctor note, radiographic findings, specimen collection details, clinical suspicion and appointment information. It remains a fictional request, visibly identified by `isMock`; none of these values were extracted from a real patient document or written into the examination transcript.
 - `pathology.referralNote` is an optional frontend draft field, rendered and edited as multiline text; it is not a claim that the pending OCR/backend contract provides that property. Keep the long fixture in `request-demo-0038.ts` so its chronology and narrative can be maintained together. Do not infer Parts from its single container.
+
+- Desktop lookup context fills the entire left grid track; do not cap it at 400px or align a narrow card against the search. Keep only the normal 32px page gutter and 24px inter-column gap while preserving the centered search position.
+
+## Font preference control restored — 8 November 2026
+
+The shared Aa 90/100/120% control is available in the unused lower-right area of the existing examination rail. It adds no header/footer row and does not move home/help or join pedal selection. It uses the same versioned preference as the portal header. The simulator's invisible wrapper is pointer-transparent; only its visible toggle/panel receives pointer events. Mobile separates the Aa control from the home/help row.
+
+## Reading hierarchy, type and breathing room — 8 November 2026
+
+- Desktop record/review uses 28/44/28 columns with 28px space above/below the cards and 24px between columns. Recording caps the transcript at 480px and keeps it internally scrollable; review uses available height. Shared Aa scaling remains active. Default body sizes: clinical context 16px/1.7, reference 15px/1.75, transcript 18px/1.65, labels 14px, patient name 20px and report title 22px.
+- Patient identity and examination accession remain in the card header. Referring-doctor note and clinical history now precede specimen/imaging information. Request identifiers, origin and collection details remain available in the trailing native details section. No clinical prose was summarized or removed. Save status belongs in the transcript heading, not patient metadata.
+- Biopsy alternatives retain stable data identifiers but appear as lightly highlighted words/phrases separated by slash marks, without button-like borders. Keep each option phrase together during line wrapping. Speech-coverage matching remains future work; no completed state is inferred.
+- A new case shows Part A. Completing it with a fresh 3-second hold/release saves completion and opens the next Part. Manual add-Part controls are removed. Part adjustment cycles unlocked/populated Parts only. A-E backing slots remain intact; legacy text/audio is always visible.
+- Optional `ExaminationDraft.visiblePartIds` persists explicitly enabled empty Parts while keeping version 2 backwards compatible. Loading, undo and review must not discard or hide saved text/audio in later Parts. Review/confirmation shows enabled/populated Parts, including empty Parts explicitly added by the user. Adding Parts is disabled after confirmation. The strip and report remain outside pedal selection.
+
+## Capture feedback and Part completion — 8 November 2026
+
+- Recording header: right-facing speaker (64px), full-width signed time-domain waveform, accumulated/live mm:ss. Removed visible title/logo/save label/line count. Green means MediaRecorder has actually started, amber means opening/processing, gray means off. Wave shape comes from 160 signed time-domain samples via AnalyserNode, with elapsed-time smoothing and a quadratic SVG path; silence remains flat. No speaker monitoring or microphone auto-start.
+- Record rail: current Part, hold-to-save Part, review/send, Tools. Latest-line editing moved into Tools. A completion target uses right hold without speech; center hold retains contextual speech. Right short release navigates normally without saving; pointer, Enter/Space, simulator and hardware use the same 3000ms release threshold and progress bar.
+- Save completion before marking a Part complete or opening its successor. A failed write retains the current Part and error/retry. Request/Part/context changes and blur cancel pending gestures. completedPartIds is optional v2 metadata; editing or appending audio revokes completion for that Part.
+- Completing A opens B; an untouched B does not need recording/completion. Review and final identity summary include only populated Parts. A report with no populated Parts cannot submit. Every populated Part must be completed. Existing later-Part data stays accessible for compatibility.
+- Review opens the existing local-lock confirmation dialog. Final confirmation also requires a fresh 3-second right hold/release. It does not submit to a hospital backend or sign clinically; the dialog retains this consequence explicitly.
+
+## Separate speech/save pedals and color identity — 8 November 2026
+
+- Center hold remains push-to-talk on every selected target. Completion and confirmation move to the right pedal, held 3000ms then released on the corresponding selected target. Right short release still selects the next available control; cancellation saves nothing. Pointer/Enter/Space on the explicit hold buttons binds to the right pedal. Hold progress, cue pictograms and help use this mapping.
+- Microphone waveform expands into all available space between the speaker and timer. A 2048-sample analyser supplies a signed 160-point curve, interpolated over time and drawn with smooth quadratic segments at up to display-frame rate. Reduced-motion preference limits updates to 10fps. There are no synthetic oscillations and no monitoring through speakers.
+- Small pictogram highlight: left orange #c45c13, center blue #2563eb, right purple #9333ea. Only the indicated key uses its highlightColor; both inactive keys retain original gray #bdccc3. Original key geometry/background remain. Hardware illustration and simulator surfaces retain their original appearance; no whole-pedal color overlays.

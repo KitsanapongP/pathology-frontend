@@ -3,7 +3,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { PedalContext } from "@/lib/examination-controls";
 
-export type FootTarget = { label: string; field?: string; lineId?: string; confirm: boolean; adjusting: boolean };
+export type FootTarget = { label: string; field?: string; lineId?: string; confirm: boolean; completePart?: boolean; adjusting: boolean };
 type Options = { context: PedalContext; ready: boolean; root: () => HTMLElement | null; onPartAdjustmentStep?: (direction: number) => void };
 // Foot navigation is an explicit allowlist, never a scan of the page's controls.
 const selector = "[data-pedal-target]";
@@ -45,7 +45,7 @@ export function useExaminationFocus(options: Options) {
   }, []);
   const describe = useCallback((element: HTMLElement | null) => {
     const label = element?.getAttribute("aria-label") || element?.textContent?.trim() || "";
-    const next: FootTarget = { label, field: element?.dataset.pedalField, lineId: element?.dataset.lineId, confirm: element?.hasAttribute("data-pedal-confirm") ?? false, adjusting: adjusting.current };
+    const next: FootTarget = { label, field: element?.dataset.pedalField, lineId: element?.dataset.lineId, confirm: element?.hasAttribute("data-pedal-confirm") ?? false, completePart: element?.hasAttribute("data-pedal-complete-part") ?? false, adjusting: adjusting.current };
     setTarget(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
   }, []);
   const select = useCallback((element: HTMLElement | null, reveal = true) => {
@@ -123,7 +123,7 @@ export function useExaminationFocus(options: Options) {
   const activate = useCallback(() => {
     const element = current.current;
     if (!element || !controls().includes(element)) return;
-    if (element.hasAttribute("data-pedal-confirm")) return;
+    if (element.hasAttribute("data-pedal-confirm") || element.hasAttribute("data-pedal-complete-part")) return;
     if ((element.dataset.pedalAdjust === "part" && latest.current.onPartAdjustmentStep) || element instanceof HTMLSelectElement || (element instanceof HTMLInputElement && element.type === "range")) {
       adjusting.current = !adjusting.current; describe(element); return;
     }
@@ -139,7 +139,7 @@ export function useExaminationFocus(options: Options) {
   }, [describe]);
   const getTarget = useCallback((): FootTarget => {
     const element = current.current;
-    return { label: element?.getAttribute("aria-label") || element?.textContent?.trim() || "", field: element?.dataset.pedalField, lineId: element?.dataset.lineId, confirm: element?.hasAttribute("data-pedal-confirm") ?? false, adjusting: adjusting.current };
+    return { label: element?.getAttribute("aria-label") || element?.textContent?.trim() || "", field: element?.dataset.pedalField, lineId: element?.dataset.lineId, confirm: element?.hasAttribute("data-pedal-confirm") ?? false, completePart: element?.hasAttribute("data-pedal-complete-part") ?? false, adjusting: adjusting.current };
   }, []);
   const selectTarget = useCallback((element: HTMLElement | null) => {
     if (element && controls().includes(element)) {

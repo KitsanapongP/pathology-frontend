@@ -182,3 +182,41 @@
 - At 1896×1244 search form before/after successful lookup had identical x/y/width; its center equals viewport center (948px). Left context card is independently scrollable, has zero foot targets, and renders the multi-paragraph referring-doctor note (945 characters) plus other clinical/specimen data. Checked with simulator open; it does not move the lookup.
 - At 1280×720 search form stayed at x=336, y=115.14, width=608 before and after a match; failed lookup also produced x/y shift zero. Page height equals 720 and there is no horizontal overflow. Restored 0038 after the failed-search check, closed simulator and reset viewport override.
 - All 24 examination tests and 4 unit tests, TypeScript and changed-file lint passed. Production build was not rerun; prior Turbopack CSS-worker limitation remains. Real STT/hardware not tested.
+
+## Lookup left-space correction — 8 November 2026
+
+Removed the lookup card's 400px cap. At 1896×1244 the card starts at x=32 and uses 572px, while the search remains centered at x=948. At 1280×720 the search center remains x=640, page height stays 720 and there is no horizontal overflow. No report data or fixture content changed; this CSS-only adjustment was verified in-browser without repeating unrelated unit checks.
+
+## Aa rail control — 8 November 2026
+
+- Extracted `PortalFontControl` for identical header/workstation behavior and persistence. Browser tested all three presets with real pointer clicks; root sizes were 14.4, 16 and 19.2px. Restored 100% and verified it remained selected after reload.
+- Corrected an invisible simulator-wrapper hit area discovered when clicking the Aa buttons: the wrapper now ignores pointer input while its actual toggle/panel still accepts it.
+- Checked 1280×720 including 120%: page height remained 720; font control has no pedal targets. Checked 1896×1244 with simulator open, closed it and reset viewport override. No microphone or report modifications.
+- TypeScript and changed-file ESLint passed. Production build was not rerun; the previously recorded CSS-worker limitation remains.
+
+## Reading hierarchy and breathing room — 8 November 2026
+
+- Browser checked the empty 0038 recording screen without adding report text/audio or confirming it. Only Part A appears; add-Part controls are available in the strip/Tools. Three new unit tests verify blank-case visibility, preservation of legacy later-Part text/audio and explicit empty-Part visibility; they do not replace browser interaction checks for future Part workflows.
+- At 1896×1244 columns measure approximately 500/785/500px and the recording card is 480px tall. DOM measurements confirm 28px above the cards and 28px between side-card bottoms and command rail. Patient clinical prose comes first; reference choices wrap as complete phrases rather than boxed buttons.
+- Checked 1280×720 at normal 100% and 120% Aa, and 1896×1244 at 120%. No horizontal overflow or extra page height was observed. Report state remains visible in its heading; the original double-left back hint and home/help/Aa remain. Simulator checked open and closed; it remains an overlay. Restored Aa 100% and viewport override after checks.
+- TypeScript, changed-file ESLint, all 24 examination tests and all 7 unit tests passed (31 total). Production build was attempted inside and outside sandbox; both failed while starting the Turbopack CSS worker. No successful production build, actual speech, microphone or hardware verification is claimed.
+
+## Capture meter and three-second completion — 8 November 2026
+
+- Browser checked existing 0038 without adding/editing text/audio or completing/finalizing it. An existing audio-only draft is retained. Recording header now shows the speaker, flat idle meter and 00:00, with no visible recording title/logo/save label. Only A is visible. A 300ms pointer press/release on completion leaves A open, with no B unlocked and no microphone capture.
+- Checked 1896x1244 (including simulator overlay) and 1280x720 at 100%/120%. No horizontal overflow or extra page height; 28px card spacing remains in DOM measurements. Restored Aa 100%, closed simulator and reset viewport override.
+- 25 controller/focus tests and 15 unit tests pass (40 total). New integration tests use isolated mocked draft storage to verify three-second completion, optional empty B, and failed completion writes retaining A/blocking review. Voice lifecycle tests mock MediaRecorder/getUserMedia: green waits for onstart, release clears it, and a delayed permission result after release never starts recording. Signal tests verify actual-energy scaling and flat silence. These do not claim real microphone/audio accuracy or hardware validation.
+- TypeScript and changed-file ESLint pass. Production build attempted inside/outside sandbox; both fail starting the Turbopack CSS worker (node process exits before connection). No successful production build or real microphone/STT test is claimed.
+
+## Right-pedal save, continuous waveform and three-color pedals — 8 November 2026
+
+- Changed completion/final confirmation to selected-target right hold/release (3000ms). Center hold retains contextual speech, including on save/confirm targets. Right short release navigates without saving. Controller tests cover center speech versus right completion, short-release navigation, cancelled holds and unfocused right holds. Existing isolated completion integration tests still cover storage failure and optional next Part.
+- Replaced 120px energy bars with a signed, temporally smoothed continuous 160-point time-domain curve. DOM/browser verified approximately 582px width at 1896x1244 and 311px at 1280x720 (298px at 120% Aa); idle is a flat line. Waveform unit tests verify signed peaks, bounds, silent baseline and frame-independent smoothing. Actual live microphone visual smoothness/audio accuracy remains unverified; no microphone permission or capture was initiated for QA.
+- Browser checked right F10 tap selects completion and shows the right-pedal hold cue; another short tap moves to Tools without unlocking B. No report content edits, completion or final locking performed on user data.
+- Pedal palette is orange/blue/purple, visible together in every small pictogram, with a taller outlined active key. Checked the full hardware drawing on standby and the development simulator. At 1280x720, including Aa 120%, there is no horizontal overflow/extra page height. Restored Aa 100%, closed simulator and reset viewport override.
+- 25 controller/focus tests plus 17 unit tests pass (42 total), TypeScript and changed-file ESLint pass. Production build was not rerun; the previously reproduced Turbopack CSS-worker startup failure remains unresolved. No real hardware/STT verification is claimed.
+
+## Selected-key color correction — 8 November 2026
+
+- User clarified that only the indicated small-pictogram key should be colored. Restored original equal-size keys, gray housing and inactive #bdccc3 fills. The one highlighted position uses orange/blue/purple for left/center/right. Removed whole-key tints from the hardware drawing and restored original simulator surfaces.
+- Browser verified the rail's left, center and right pictograms each contain exactly one colored key plus two original gray keys; screenshot confirms original hardware appearance. No report data or pedal mapping changed. TypeScript and changed-file ESLint pass. No new tests or production build were needed for this visual-only correction.
