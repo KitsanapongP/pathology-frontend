@@ -7,9 +7,9 @@ export type PedalAction = "previousControl" | "nextControl" | "activate" | "spea
 export type PedalBinding = { tap?: PedalAction; hold?: PedalAction; doubleTap?: PedalAction; minimumHoldMs?: number; holdDelayMs?: number };
 export type PedalPresentation = { voiceLabel?: string; confirmFocused?: boolean; completePartFocused?: boolean; adjusting?: boolean; partAdjusting?: boolean };
 export const pedalBindings = {
-  left: { title: "ซ้าย", position: "ซ้าย", hardware: "F13", keyboard: "F8", color: "#158575", highlightColor: "#c45c13" },
-  center: { title: "กลาง", position: "กลาง", hardware: "F14", keyboard: "F9", color: "#5178c7", highlightColor: "#2563eb" },
-  right: { title: "ขวา", position: "ขวา", hardware: "F15", keyboard: "F10", color: "#a27b42", highlightColor: "#9333ea" },
+  left: { title: "ซ้าย", position: "ซ้าย", hardware: "F13", keyboard: "F8", highlightColor: "#c45c13" },
+  center: { title: "กลาง", position: "กลาง", hardware: "F14", keyboard: "F9", highlightColor: "#2563eb" },
+  right: { title: "ขวา", position: "ขวา", hardware: "F15", keyboard: "F10", highlightColor: "#9333ea" },
 } as const;
 export const pedalTiming = { doubleTapMs: 350, voiceHoldMs: 250, confirmHoldMs: 3000 };
 export const examinationSteps = ["ระบุคำร้อง", "บันทึกผล", "ตรวจสอบและยืนยัน"];

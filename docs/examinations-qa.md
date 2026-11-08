@@ -220,3 +220,9 @@ Removed the lookup card's 400px cap. At 1896×1244 the card starts at x=32 and u
 
 - User clarified that only the indicated small-pictogram key should be colored. Restored original equal-size keys, gray housing and inactive #bdccc3 fills. The one highlighted position uses orange/blue/purple for left/center/right. Removed whole-key tints from the hardware drawing and restored original simulator surfaces.
 - Browser verified the rail's left, center and right pictograms each contain exactly one colored key plus two original gray keys; screenshot confirms original hardware appearance. No report data or pedal mapping changed. TypeScript and changed-file ESLint pass. No new tests or production build were needed for this visual-only correction.
+
+## Hardware accent alignment — 8 November 2026
+
+- The large pedal illustration now reads the same highlightColor source as the small rail pictograms: left orange, center blue, right purple. Removed the redundant older color values; dark key surfaces, gray inactive outlines and original strip dimensions remain unchanged.
+- Browser verified the three large accent-strip fills are exactly #c45c13/#2563eb/#9333ea at 1896x1244 with simulator open and inspected 1280x720 after closing it. No report edits or microphone capture. Reset viewport afterwards.
+- TypeScript and changed-file ESLint pass. This color-only correction does not change gestures; no new tests or production build were run. Previously documented build/hardware limitations remain.
