@@ -108,3 +108,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Center hold always retains contextual push-to-talk, including when completion/confirmation is selected. Right hold saves only on the selected completion/confirmation target; right tap still navigates. Keep the target binding captured on press, and update every cue/progress bar to the right pedal.
 - Small pedal pictograms preserve the original geometry and gray inactive keys. Only the indicated key is colored using pedalBindings.highlightColor: left orange, center blue, right purple. Do not tint all three keys, enlarge the indicated key or recolor the hardware illustration/simulator surfaces. The hardware drawing's thin accent strips and active outline use the same highlightColor as the small pictograms. Preserve the existing role/position aria-label and no visible captions.
+
+- PortalFrame normalizes trailing slashes before matching the examination route. GitHub Pages exports use trailingSlash:true, so both /portal/examinations and /portal/examinations/ must hide the header and receive portal-frame--station. Do not match unrelated route prefixes.

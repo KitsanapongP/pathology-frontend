@@ -226,3 +226,8 @@ Removed the lookup card's 400px cap. At 1896×1244 the card starts at x=32 and u
 - The large pedal illustration now reads the same highlightColor source as the small rail pictograms: left orange, center blue, right purple. Removed the redundant older color values; dark key surfaces, gray inactive outlines and original strip dimensions remain unchanged.
 - Browser verified the three large accent-strip fills are exactly #c45c13/#2563eb/#9333ea at 1896x1244 with simulator open and inspected 1280x720 after closing it. No report edits or microphone capture. Reset viewport afterwards.
 - TypeScript and changed-file ESLint pass. This color-only correction does not change gestures; no new tests or production build were run. Previously documented build/hardware limitations remain.
+
+## GitHub Pages trailing-slash shell fix — 8 November 2026
+
+- GitHub Pages run 42430989178 successfully deployed commit 1796528, but the live /pathology-frontend/portal/examinations/ page had class portal-frame and rendered WorkspaceHeader. The exact pathname comparison did not recognize the exported trailing slash, disabling the workstation shell CSS as well as header suppression.
+- PortalFrame now removes trailing slashes before the exact route comparison. Five regression cases cover both examination forms and unrelated portal routes. All 22 unit tests pass; TypeScript and changed-file ESLint are checked before publication. Production build/deployment verification is recorded after GitHub Actions completes; do not infer live success from a push alone.

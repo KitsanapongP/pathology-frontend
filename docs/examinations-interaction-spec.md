@@ -191,3 +191,5 @@ The shared Aa 90/100/120% control is available in the unused lower-right area of
 - Small pictogram highlight: left orange #c45c13, center blue #2563eb, right purple #9333ea. Only the indicated key uses its highlightColor; both inactive keys retain original gray #bdccc3. Original key geometry/background remain. Hardware illustration and simulator surfaces retain their original appearance; no whole-pedal color overlays.
 
 - Hardware color consistency: its thin accent strips and active outline use the same highlightColor source as the rail pictograms (orange/blue/purple). Keep dark key surfaces and gray inactive outlines; do not add colored whole-key overlays.
+
+- Static hosting: PortalFrame must identify the examination route with or without a trailing slash. Both variants omit WorkspaceHeader and receive portal-frame--station; unrelated modules keep the shared header.
