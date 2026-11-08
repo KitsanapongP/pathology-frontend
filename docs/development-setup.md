@@ -89,7 +89,8 @@ updates; pin reviewed image digests when the team establishes release policy.
 on the group's self-hosted runner (`tags: [pathology-dev]`); gitlab.com instance
 runners are disabled, so a job without that tag never starts.
 
-- MR / every branch (only the MR pipeline while an MR is open): `verify` (lint, typecheck, unit tests, build), `dependency-audit`
+- MR / every branch (only the MR pipeline while an MR is open): `branch-name` (branch must be `main`, `dev`,
+  `feature/*`, `fix/*` or `hotfix/*`), `verify` (lint, typecheck, unit tests, build), `dependency-audit`
   and `e2e` (Chromium browser tests).
 - Tag `dev-v*`: the same tests, then `deploy-dev` builds `pathology-web:<tag>` on
   the dev server and runs `docker compose up -d` with `deploy/compose.yml` in
