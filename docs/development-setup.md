@@ -85,15 +85,22 @@ updates; pin reviewed image digests when the team establishes release policy.
 
 ## 3. GitLab CI
 
-`.gitlab-ci.yml` prepares three jobs: checks/build, a production dependency audit,
-and Chromium browser tests. Branch pipelines switch to MR pipelines when an MR
-exists, avoiding duplicate push pipelines. No deploy job is configured.
+`.gitlab-ci.yml` follows the same pattern as the backend services. Every job runs
+on the group's self-hosted runner (`tags: [pathology-dev]`); gitlab.com instance
+runners are disabled, so a job without that tag never starts.
 
-Before uploading, have the maintainer review the configuration in GitLab's CI Lint
-and confirm an enabled Linux Docker/Kubernetes executor runner that can pull
-`node:24-bookworm` and install browser OS dependencies. A shell executor ignores
-the `image` setting and needs a different setup. Runner quota and access are
-project/account dependent. This file has not run on GitLab until it is pushed.
+- MR / every branch (only the MR pipeline while an MR is open): `verify` (lint, typecheck, unit tests, build), `dependency-audit`
+  and `e2e` (Chromium browser tests).
+- Tag `dev-v*`: the same tests, then `deploy-dev` builds `pathology-web:<tag>` on
+  the dev server and runs `docker compose up -d` with `deploy/compose.yml` in
+  `/opt/pathology/dev/apps/pathology-web/`.
+- Tag `prod-v*`: the same tests, then a manual `deploy-prod` on the
+  `pathology-prod` runner does the same in `/opt/pathology/prod/apps/pathology-web/`.
+
+The container is `pathology-web` on network `pathology-<env>`, publishes no port
+and is reached through the infra nginx at `app.<NGINX_DOMAIN>` (`UPSTREAM_WEB`).
+The app has no runtime `.env` yet; `NEXT_PUBLIC_*` values are fixed at build time.
+Run the configuration through GitLab's CI Lint before pushing a tag.
 
 Audit fails for high/critical production dependency findings. Triage findings;
 do not run `npm audit fix --force` automatically. Development dependencies should
