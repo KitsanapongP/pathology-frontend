@@ -30,6 +30,27 @@ stages:
 ##############################################################################
 ##                                   Test                                   ##
 ##############################################################################
+# ชื่อ branch ต้องเป็น main / dev / feature/* / fix/* / hotfix/* (ตรงกับ protected branches ที่ปิด force push)
+# ใช้คู่กับ Settings → Merge requests → Pipelines must succeed: MR จาก branch ชื่อผิด merge ไม่ได้
+branch-name:
+  stage: test
+  image: alpine:3.22
+  interruptible: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+  script:
+    - BRANCH="${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_BRANCH}"
+    - |
+      if ! echo "$BRANCH" | grep -Eq '^(main|dev|(feature|fix|hotfix)/[A-Za-z0-9._-]+)$'; then
+        echo "ชื่อ branch '$BRANCH' ไม่ถูกต้อง — ใช้ feature/<ชื่อ>, fix/<ชื่อ> หรือ hotfix/<ชื่อ>"
+        echo "เปลี่ยนชื่อ: git branch -m feature/<ชื่อ> แล้ว push ใหม่ (เปิด MR ใหม่จาก branch นั้น)"
+        exit 1
+      fi
+    - echo "branch '$BRANCH' ถูกต้อง"
+
 .node_job:
   extends: .on_ci
   stage: test
