@@ -2,6 +2,14 @@ export type PortalLanguage = "th" | "en";
 
 // Thai labels remain the canonical record/filter values. Translate presentation only.
 export const english: Record<string, string> = {
+  "รหัสผ่าน": "Password",
+  "เข้าสู่ระบบ": "Sign in",
+  "เข้าสู่ระบบพยาธิวิทยา": "Pathology sign in",
+  "กรุณาระบุชื่อผู้ใช้": "Enter your username",
+  "กรุณาระบุรหัสผ่าน": "Enter your password",
+  "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง": "Username or password is incorrect",
+  "กำลังเข้าสู่ระบบ": "Signing in",
+  "เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง": "Unable to sign in. Please try again.",
   "เปลี่ยนรหัสผ่านครั้งแรก": "Change your initial password",
   "รหัสผ่านเดิม": "Current password",
   "รหัสผ่านใหม่": "New password",

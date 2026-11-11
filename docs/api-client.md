@@ -28,6 +28,10 @@ remain usable without API configuration.
 example to `.env` for Compose); direct Docker builds use
 `docker build --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:8088 .`.
 Rebuild when changing the API origin. No credentials belong in build arguments.
+GitHub Pages builds read the repository Actions variable
+`NEXT_PUBLIC_API_BASE_URL`; set its approved API URL in GitHub before expecting
+live login. An unset variable leaves API calls unavailable rather than guessing
+a production host. This task does not change repository variables or backend CORS.
 An HTTPS frontend cannot call an HTTP API because of browser mixed-content rules;
 coordinate matching schemes or HTTPS nginx before that deployment.
 

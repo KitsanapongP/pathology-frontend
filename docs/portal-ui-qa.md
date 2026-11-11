@@ -9,6 +9,10 @@
   module, including the examination route, and stays restricted after reload.
   Password values and tokens in browser QA are synthetic. Live backend/STT and
   hardware were not exercised.
+- Task 4: visually inspected login at 1280×720, 1896×1244 and 390×844. The real
+  username/password form and its submit button fit with no horizontal overflow.
+  Demo role navigation is gone. The existing login page branding/footer remains.
+  All 14 synthetic browser checks passed, including password-change/re-login.
 
 ## Previous portal checks
 

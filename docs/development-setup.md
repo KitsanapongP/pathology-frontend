@@ -23,9 +23,9 @@ npm run check
 tests. `check` additionally runs lint, TypeScript and a normal production build.
 `npm run test:watch` is the optional interactive development mode.
 
-Unit examples cover identifier scoping, multiple search terms and receipt dates
-crossing midnight in Asia/Bangkok. The component example checks password visibility
-without submitting credentials. These do not prove real authentication.
+Unit examples cover identifier scoping, receipt dates in Asia/Bangkok, HTTP
+errors, session expiry/rotation and login/password form validation. Auth tests use
+synthetic tokens with mocked network responses; they do not prove live authentication.
 
 Install Chromium once, then run the browser suite:
 
@@ -48,7 +48,8 @@ npm run test:e2e
 
 Do not delete all browser caches or reinstall project dependencies for this error.
 
-The E2E command builds production and starts its own server on loopback port 3100.
+The E2E command builds production with an intercepted synthetic API origin
+(`http://api.e2e.test`) and starts its own server on loopback port 3100.
 Stop any other process on that port before running; it deliberately refuses to
 reuse an unknown server. Each test has an isolated browser context. It does not
 touch the user's existing drafts, microphone or clinical confirmation workflow.
@@ -122,9 +123,10 @@ development dependency chain. npm's suggested force fix downgrades
 
 ## 5. Security work before real data
 
-- Current login is a demo role selector. Implement server-verified identity and
-  per-record/tenant authorization before connecting real records. Hiding a button
-  does not enforce access.
+- Login, refresh, logout and mandatory password change use the supplied auth API
+  contract. Verify them against the real backend/CORS/Keycloak deployment before
+  connecting real records. Per-record, role and tenant authorization remain
+  backend responsibilities; frontend guards do not enforce API permissions.
 - Use only synthetic data in fixtures, screenshots, traces, Postman and CI logs.
   Playwright traces may contain DOM/network details. CI failure artifacts expire
   after three days; confirm this with organizational retention policy.

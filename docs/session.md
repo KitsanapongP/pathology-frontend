@@ -72,3 +72,27 @@ tests and production build). All nine synthetic Chromium tests passed, including
 forced-route/reload isolation, validation, wrong-password mapping and clearing
 tokens with the login success notice. Real re-login with a new password is
 covered by Task 4's combined synthetic flow; live backend verification is pending.
+
+## Credential login (Task 4)
+
+The root login page now submits `POST /v1/auth/login` with
+`{ username, password }` and `auth: false`; required fields are checked locally.
+It accepts the supplied token-set contract, passes tokens and request start time
+to `portalSession.accept`, and replaces navigation with `/portal` or
+`/change-password`. The previous Student/Professor and Admin demo navigation
+buttons are removed. No roles are inferred from user-entered credentials.
+
+`auth.invalid_credentials` shows one localized username-or-password error using
+the code, independent of backend message wording. Other backend messages are
+rendered directly, with field arrays below the corresponding inputs and shared
+429/5xx diagnostics. Duplicate submits are blocked; unmount cancels a pending
+login and prevents a late response from creating a session. Passwords are never
+stored in browser persistence. The password-change success notice is shown once
+on login; successful login clears the in-memory password field.
+
+Task 4 verified on 2026-11-11: `npm run check` passed (25 Node tests, 55 Vitest
+tests, lint, TypeScript and production build). All 14 synthetic Chromium tests
+passed, including invalid credentials without refresh, normal login/reload, and
+initial-password change followed by login with the new password without another
+mandatory change. GitHub Pages static export also built successfully with the
+repository base path. No live Keycloak/backend credentials were used.
