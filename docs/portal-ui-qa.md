@@ -2,33 +2,14 @@
 
 ## Authentication additions — 11 November 2026
 
-- Latest refinement: username/password and the normal login button remain the
-  main card. Two small skip-role shortcuts sit at the viewport's bottom-right
-  on desktop, and in normal flow right-aligned below the card on mobile. Inspected
-  1280×720, 1896×1244 and 390×844; no overlap or horizontal overflow. Shortcut-enabled
-  browser tests also cover real login and mandatory-password restrictions.
-
-- Temporary role preview restored at the user's request: visually inspected both
-  role buttons at 1280×720 and 1896×1244, with no clipping/overflow. Student /
-  Professor opens `/portal`; Admin opens `/portal/admin`. Both survive reload,
-  sign out and reject re-entry after logout, with zero backend calls. The API
-  login/password/session UI remains available with `NEXT_PUBLIC_AUTH_MODE=api`.
-
-- Task 3: visually inspected synthetic password-change screenshots at 1280×720
-  and 1896×1244. The three labelled fields, submit and logout fit without clipping
-  or horizontal overflow. The page has no portal header or foot-pedal targets.
-- Chromium verified that a restricted session cannot enter login or any portal
-  module, including the examination route, and stays restricted after reload.
-  Password values and tokens in browser QA are synthetic. Live backend/STT and
-  hardware were not exercised.
-- Task 4: visually inspected login at 1280×720, 1896×1244 and 390×844. The real
-  username/password form and its submit button fit with no horizontal overflow.
-  Demo role navigation is gone. The existing login page branding/footer remains.
-  All 14 synthetic browser checks passed, including password-change/re-login.
-- Latest Swagger alignment: all 15 synthetic browser checks passed, including
-  username/password length errors beneath their respective fields and submission
-  at the allowed boundaries. Unit tests additionally check Unicode character
-  boundaries for login and password change. The page layout is unchanged.
+- Inspected login at 1280×720, 1896×1244 and 390×844: the main form and small
+  skip-role shortcuts do not overlap or overflow. Shortcuts are bottom-right
+  on desktop and right-aligned below the card on mobile.
+- Synthetic browser checks cover role destinations, reload/logout, field errors,
+  real-auth mocks with shortcuts visible, and mandatory-password restrictions.
+- The password-change form fits both desktop sizes without a portal header or
+  pedal targets. Tests use synthetic data; live backend, STT and hardware remain
+  outside these authentication checks.
 
 ## Previous portal checks
 

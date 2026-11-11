@@ -1,252 +1,100 @@
-# Development setup and practice
+# Development
 
-The standard development flow remains `npm ci` followed by `npm run dev` with
-Node.js 24. Docker and browser testing are optional workflows described below.
-Business modules currently use fixtures. The user-requested temporary demo mode
-adds small Student / Professor and Admin skip shortcuts beside the real login form.
-Set `NEXT_PUBLIC_AUTH_MODE=demo` in `.env.local` (the example enables it), or `api`
-to hide the shortcuts. Real login needs backend/VPN and approved API configuration.
-Isolated browser tests mock auth with synthetic tokens and need no credentials.
+Use Node.js 24 and `npm ci`. Configure `.env.local` from `.env.example`; see
+[API/auth](api-client.md). Public env values are fixed at build time, so restart
+dev or rebuild after changing them. Compose reads `.env`, not `.env.local`.
 
-Repository files do not configure GitLab project settings, runners, secrets,
-registry access or deployment targets automatically.
+## Checks
 
-## 1. Tests in the terminal
+| Command | Purpose |
+| --- | --- |
+| `npm run check` | Lint, TypeScript, unit tests and production build |
+| `npm test` | Node examination tests plus Vitest `tests/unit` |
+| `npm run test:e2e` | Playwright `tests/e2e`, mocked API authentication |
+| `npm run test:e2e:demo` | Playwright skip-login preview |
+| `npm run security:audit` | Production dependency audit |
 
-Use Node.js 24 and npm. From the repository root:
+Install Chromium with `npx --no-install playwright install chromium`; Linux CI
+uses `--with-deps`. A missing executable needs installation in the test user's
+environment; use `--force` only for a damaged download. Inspect failures with
+`npm run test:e2e:report`.
 
-```powershell
-npm ci
-npm test
-npm run check
-```
+The E2E wrapper builds a synthetic API origin and the selected auth mode on both
+Windows and Linux, then starts a fresh production server on 127.0.0.1:3100.
+Run browser suites sequentially and do not reuse the user's server/browser.
+Tests use synthetic data and never prove live Keycloak, microphone or hardware
+behavior. For a normal `npm start` after E2E, rebuild with your intended env.
 
-`npm test` runs the existing Node gesture/focus suite plus Vitest unit/component
-tests. `check` additionally runs lint, TypeScript and a normal production build.
-`npm run test:watch` is the optional interactive development mode.
+After dependency changes, verify `npm ci` on Windows and Linux. If Linux reports
+missing optional native lockfile entries, regenerate the lockfile in a clean
+Linux container; do not replace CI's `npm ci` with `npm install`.
 
-Unit examples cover identifier scoping, receipt dates in Asia/Bangkok, HTTP
-errors, session expiry/rotation and login/password form validation. Auth tests use
-synthetic tokens with mocked network responses; they do not prove live authentication.
+## Docker and deployment
 
-Install Chromium once, then run the browser suite:
-
-```powershell
-npx --no-install playwright install chromium
-npm run test:e2e
-```
-
-The normal E2E command forces API authentication mode with mocked responses.
-Run `npm run test:e2e:demo` separately to verify the role preview; do not run both
-commands concurrently because both own loopback port 3100.
-
-If the tests fail immediately with `browserType.launch: Executable doesn't exist`,
-the browser binary is unavailable; no UI assertions have run yet. `npm ci`
-installs the Playwright package separately from its per-user browser downloads.
-Run the Chromium install command above from the same Windows account/terminal
-environment used for tests. If installation reports success but the executable
-is still missing, repair that download with:
-
-```powershell
-npx --no-install playwright install --force chromium
-npm run test:e2e
-```
-
-Do not delete all browser caches or reinstall project dependencies for this error.
-
-The E2E command builds production with an intercepted synthetic API origin
-(`http://api.e2e.test`) and starts its own server on loopback port 3100.
-Stop any other process on that port before running; it deliberately refuses to
-reuse an unknown server. Each test has an isolated browser context. It does not
-touch the user's existing drafts, microphone or clinical confirmation workflow.
-On Linux CI, use `playwright install --with-deps chromium` to install OS packages.
-Failure artifacts are in `test-results/` and `playwright-report/`; inspect with
-`npm run test:e2e:report` (opens a local report server; Ctrl+C stops it).
-
-## 2. Docker
-
-Open Docker Desktop, using Linux containers, and wait until `docker info` works.
-If it reports `dockerDesktopLinuxEngine` unavailable, start/restart Docker Desktop
-and check its WSL backend before retrying. Do not reset/delete Docker data.
+Start Docker Desktop with Linux containers, then:
 
 ```powershell
 docker compose config --quiet
 docker compose up --build -d --wait
-docker compose ps
 docker compose logs --tail 80 frontend
 docker compose down
 ```
 
-The app is at http://localhost:3000 while running. Docker builds Linux dependencies
-with `npm ci`, then copies Next's standalone output into a non-root runtime image.
-This is a production-mode practice container, without hot reload. Rebuild after
-source changes. Browser IndexedDB remains browser storage, not a Docker volume.
+Local Compose binds only loopback (`FRONTEND_PORT`, default 3000). Images run as
+non-root; `.env*` and private keys are excluded from the build context. Pass
+`NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_AUTH_MODE` as build arguments.
+Standalone output is enabled only with `DOCKER_BUILD=true`; GitHub Pages keeps
+its separate static-export build.
 
-If port 3000 is already occupied, copy `.env.example` to `.env` and set
-`FRONTEND_PORT=3001`, then open http://localhost:3001. Compose binds only loopback.
-No API secret/configuration is required while the app uses fixtures. Never put
-secrets in `NEXT_PUBLIC_*`; these values are public and baked into a build.
-`DOCKER_BUILD=true` enables standalone only inside Docker; GitHub Pages retains
-its existing static-export behavior. Base images currently track Node 24 security
-updates; pin reviewed image digests when the team establishes release policy.
+GitLab jobs use the group's `pathology-dev` runner: branch-name validation,
+check, audit and browser tests. While an MR is open, its pipeline replaces the
+duplicate branch pipeline. A branch push does not deploy. Tags `dev-v*` deploy
+dev; tags `prod-v*` require manual deployment on `pathology-prod`.
 
-## 3. GitLab CI
+Server deployment uses `deploy/compose.yml`, network `pathology-<env>` and infra
+nginx (`UPSTREAM_WEB`), with no published application port. The maintainer must
+validate CI/runner setup and Docker build arguments before tagging: the current
+deploy job passes neither public env argument. No runtime env file can replace
+values already embedded in the browser build. Preserve the team's CI/deploy files.
 
-`.gitlab-ci.yml` follows the same pattern as the backend services. Every job runs
-on the group's self-hosted runner (`tags: [pathology-dev]`); gitlab.com instance
-runners are disabled, so a job without that tag never starts.
+## GitHub / GitLab
 
-- MR / every branch (only the MR pipeline while an MR is open): `branch-name` (branch must be `main`, `dev`,
-  `feature/*`, `fix/*` or `hotfix/*`), `verify` (lint, typecheck, unit tests, build), `dependency-audit`
-  and `e2e` (Chromium browser tests).
-- Tag `dev-v*`: the same tests, then `deploy-dev` builds `pathology-web:<tag>` on
-  the dev server and runs `docker compose up -d` with `deploy/compose.yml` in
-  `/opt/pathology/dev/apps/pathology-web/`.
-- Tag `prod-v*`: the same tests, then a manual `deploy-prod` on the
-  `pathology-prod` runner does the same in `/opt/pathology/prod/apps/pathology-web/`.
-
-The container is `pathology-web` on network `pathology-<env>`, publishes no port
-and is reached through the infra nginx at `app.<NGINX_DOMAIN>` (`UPSTREAM_WEB`).
-The app has no runtime `.env` yet; `NEXT_PUBLIC_*` values are fixed at build time.
-Run the configuration through GitLab's CI Lint before pushing a tag.
-
-For the initial user-authorized source synchronization, fetch GitLab `dev`
-first and preserve the group's CI/deploy history. Subsequent work follows the
-shared branch/MR workflow below. A branch push runs checks; it does not deploy.
-The request-identifier browser regression also needs the shared synthetic
-auth fixture now that portal routes are guarded. Never upload ignored local env
-files or the private dev IP. Before a later tag deployment, the maintainer must
-provide the approved `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_AUTH_MODE` as
-Docker build arguments; the existing deployment job currently passes neither,
-and standalone Docker defaults to API mode with no API URL. No deployment tag
-should be created merely to upload source for review.
-
-Local validation for the frontend/dev integration on 2026-11-11 passed:
-`npm run check` (25 Node tests, 65 Vitest tests, lint, TypeScript and build),
-16 API-mode Chromium tests, seven shortcut-preview Chromium tests, and the
-production dependency audit (zero reported vulnerabilities). GitLab's existing
-CI/deploy files were preserved byte-for-byte; runner/pipeline results must be
-checked on GitLab after publication.
-
-### Shared GitHub / GitLab history
-
-`gitlab` is the team's GitLab remote; `origin` is the GitHub preview/backup remote.
-GitLab `dev` is the reviewed integration source and GitHub `dev` follows it.
-GitHub `main` is promoted explicitly for preview/release; GitLab `main` and deploy
-tags are not part of routine synchronization.
-
-Start a task from the current reviewed dev commit (use a new branch name):
+`gitlab/dev` is the reviewed integration source; `origin/dev` mirrors it.
+Use one `feature/*`, `fix/*` or `hotfix/*` branch per reviewable task. GitLab CI
+rejects other feature prefixes, including `codex/`.
 
 ```powershell
 git fetch gitlab dev
-git switch -c feature/task-5-profile gitlab/dev
-# Implement, check, and commit one reviewable task.
-git add -- <explicit changed paths>
-git commit -m "[FE][Task 5] Add profile editing"
+git switch -c feature/short-task-name gitlab/dev
+# Implement, check, and commit the task, then push the same branch to both remotes.
 git push -u origin HEAD
-git push gitlab HEAD
+git push -o merge_request.create -o merge_request.target=dev gitlab HEAD
 ```
 
-Both remotes receive the same commit/hash and descriptive task message. Branch
-names sent to GitLab must be `feature/*`, `fix/*` or `hotfix/*` (its CI rejects
-the default `codex/` prefix). Open one GitLab MR from the task branch into `dev`.
-Push follow-up commits to that same branch on both remotes to update the existing
-MR. Group commits by a reviewable behavior; one MR need not equal one commit.
-Draft MRs are useful while a task is still being built. Do not independently
-merge the task again on GitHub: GitLab may create a merge/squash commit whose
-actual resulting hash must be copied.
+The last command creates the GitLab MR into `dev`. Further commits go to the
+same branch and update that MR; do not open a second GitHub review queue.
+Use descriptive messages such as `[FE][Task 5] Add profile editing`. Do not
+independently merge/squash the same task on both services.
 
-After the maintainer merges the MR:
+After the maintainer merges the MR, sync the actual resulting commit:
 
 ```powershell
-npm run git:sync-dev
 git fetch gitlab dev
+git push origin refs/remotes/gitlab/dev:refs/heads/dev
 git switch dev
 git merge --ff-only gitlab/dev
 ```
 
-The helper copies only GitLab `dev` to GitHub `dev`, creating the GitHub branch if
-absent. It never pushes the local working branch, GitLab, main or tags; it does
-not change the working tree or checkout. It uses normal fast-forward pushes and
-stops if GitHub has independent changes, including a concurrent conflicting
-push. Reconcile divergence through a reviewed GitLab MR and retry; never force
-sync. Remote updates are sequential, not a cross-service transaction: rerun after
-fixing connectivity/permissions if one side remains behind. No scheduled/background
-mirror or new credentials are installed by this workflow.
+These normal pushes reject divergent history; reconcile it through a GitLab MR
+instead of forcing it. Keep the working tree clean before switching branches.
+Promote GitHub `main` explicitly for Pages preview/release. GitLab `main` and
+deployment tags are separate maintainer actions. Never rewrite shared history
+to rename old commits or upload ignored local env files.
 
-For the one-time initial sync, GitHub `main`, GitHub `dev` and GitLab `dev` start
-at the same commit. Thereafter only the two `dev` branches are expected to match
-after each reviewed merge. Push to GitHub `main` only when intentionally promoting
-that reviewed dev commit for the existing Pages workflow.
+## Data and integration limits
 
-Sync helper verification: `npm run check` passed with 25 Node tests and 68 Vitest
-tests. Its three offline Git integration tests use temporary local bare remotes:
-they verify creating GitHub dev, fast-forwarding the reviewed source, refusing
-divergence, and leaving an unreviewed local HEAD and main/tags untouched.
-
-Audit fails for high/critical production dependency findings. Triage findings;
-do not run `npm audit fix --force` automatically. Development dependencies should
-also be reviewed with `npm audit` before upgrades. This is dependency scanning,
-not a complete security assessment. No registry credentials are needed yet.
-
-## 4. API and Postman
-
-The shared HTTP client is documented in `docs/api-client.md`, including env/build
-configuration, auth/language headers, field validation and the backend CORS
-handoff. Fixtures remain local until actual endpoint contracts are integrated.
-
-See `postman/README.md`. Health checks use the supplied base-URL handoff; the dev
-IP may be configured in a Git-ignored `postman/dev.local.json`; this file is not
-included in a clone. Start with the committed blank environment template and
-request approved URLs from backend. Obtain the actual OpenAPI
-specification, authentication flow, test roles and synthetic data from backend
-before adding login or business requests. The supplied portal Swagger path is
-`/swagger/index.html`, not inside `/v1`. Tell backend the browser origin
-`http://localhost:3000` (or the actual alternate port) for its CORS allowlist.
-
-Initial audit on 2026-11-05: production audit returned no vulnerabilities. Full
-audit reported eight moderate findings in the ESLint/typescript-eslint/minimatch
-development dependency chain. npm's suggested force fix downgrades
-`eslint-config-next` across major versions; do not apply it automatically.
-
-## 5. Security work before real data
-
-- Login, refresh, logout and mandatory password change use the supplied auth API
-  contract. Verify them against the real backend/CORS/Keycloak deployment before
-  connecting real records. Per-record, role and tenant authorization remain
-  backend responsibilities; frontend guards do not enforce API permissions.
-- Use only synthetic data in fixtures, screenshots, traces, Postman and CI logs.
-  Playwright traces may contain DOM/network details. CI failure artifacts expire
-  after three days; confirm this with organizational retention policy.
-- Inventory stored data: in-memory uploads/edits, IndexedDB reports/audio and the
-  temporary browser STT provider. Confirm permitted providers and data locations
-  before processing health data or recordings. Docker does not enforce PDPA.
-- Agree retention/deletion, audit events, backup/restore, least-privilege roles,
-  approved hosting, HTTPS and incident handling with IT/security and the DPO.
-  Legal basis and health-data processing requirements need organizational review.
-- Keep `.env`, tokens, original scans and private keys out of Git/build contexts.
-  A private repository does not justify storing credentials or patient records.
-  Audit output alone does not detect embedded secrets, image vulnerabilities,
-  authorization failures or policy compliance. Add those checks with the team.
-
-## Verification on 2026-11-05
-
-- Clean `npm ci` passed on Windows and in the Linux Docker build. The lockfile was
-  repaired in a clean Linux container after optional `@emnapi` entries were missing.
-- `npm run check` passed: lint, typecheck, 24 Node tests, four Vitest tests and build.
-- `npm run test:e2e` passed both Chromium scenarios against the production build.
-- Docker multi-stage build passed. Compose reported healthy; runtime was uid 1000
-  (`node`). `/`, `/portal`, `/portal/requests` and referenced static assets returned
-  successful responses on loopback port 3000 during verification.
-- Compose configuration, CI YAML parsing and Postman JSON parsing passed locally.
-  GitLab CI Lint, runner execution, registry publishing and deployment were not run.
-- Dev portal health and Swagger GETs timed out from this machine (8-second timeout).
-  Verify network/VPN/server reachability; this does not establish an API outage.
-
-## Official references
-
-- https://docs.docker.com/build/building/best-practices/
-- https://docs.gitlab.com/ci/yaml/workflow/
-- https://playwright.dev/docs/ci
-- https://nextjs.org/docs/app/guides/testing
-- https://learning.postman.com/latest-v-12/docs/getting-started/importing-and-exporting/importing-data
+Keep tokens, original scans, private IP environments and patient data out of Git,
+screenshots, traces and CI logs. Preserve browser drafts/audio during QA. Browser
+STT may use an external provider; confirm permitted providers and retention
+before processing real clinical data. Frontend guards do not enforce backend
+record/tenant permissions. Live API/CORS and release verification remain team tasks.

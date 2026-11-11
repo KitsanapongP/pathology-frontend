@@ -16,7 +16,6 @@
     "test:e2e:report": "playwright show-report --host 127.0.0.1",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "security:audit": "npm audit --omit=dev --audit-level=high",
-    "git:sync-dev": "node scripts/sync-dev.mjs",
     "test:examinations": "node --test tests/examination-controls.test.mjs tests/examination-focus.test.mjs"
   },
   "dependencies": {
