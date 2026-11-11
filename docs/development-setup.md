@@ -59,24 +59,32 @@ values already embedded in the browser build. Preserve the team's CI/deploy file
 
 ## GitHub / GitLab
 
-`gitlab/dev` is the reviewed integration source; `origin/dev` mirrors it.
-Use one `feature/*`, `fix/*` or `hotfix/*` branch per reviewable task. GitLab CI
-rejects other feature prefixes, including `codex/`.
+Small tasks (text, docs, styling or isolated fixes) go directly on `dev`. Keep
+GitLab `dev` and GitHub `dev` on the same commits with clear task messages. Start
+with a clean working tree and fetch both remotes:
 
 ```powershell
 git fetch gitlab dev
-git switch -c feature/short-task-name gitlab/dev
-# Implement, check, and commit the task, then push the same branch to both remotes.
-git push -u origin HEAD
-git push -o merge_request.create -o merge_request.target=dev gitlab HEAD
+git fetch origin dev
+git switch dev
+git merge --ff-only gitlab/dev
+# Implement, check, and commit the task, then publish the same commits.
+git push gitlab dev
+git push origin dev
 ```
 
-The last command creates the GitLab MR into `dev`. Further commits go to the
-same branch and update that MR; do not open a second GitHub review queue.
-Use descriptive messages such as `[FE][Task 5] Add profile editing`. Do not
-independently merge/squash the same task on both services.
+Use descriptive messages such as `[FE][Task 5] Add profile editing`. If either
+remote has independent changes, reconcile them while preserving history before
+retrying; never force sync or independently squash the same work on each service.
 
-After the maintainer merges the MR, sync the actual resulting commit:
+For a new system/module, broad refactor or changes needing coordinated integration
+tests, create a separate `feature/*` branch from dev and push that branch to both
+remotes. GitLab also accepts `fix/*` and `hotfix/*`; its CI rejects arbitrary
+feature prefixes. Integrate the completed, checked work back into dev and copy
+the actual resulting commit to the other remote. Reserve the batch review MR
+into main until the user requests it.
+
+If the maintainer has already merged work into GitLab `dev`, copy that result:
 
 ```powershell
 git fetch gitlab dev
@@ -85,11 +93,14 @@ git switch dev
 git merge --ff-only gitlab/dev
 ```
 
-These normal pushes reject divergent history; reconcile it through a GitLab MR
-instead of forcing it. Keep the working tree clean before switching branches.
-Promote GitHub `main` explicitly for Pages preview/release. GitLab `main` and
-deployment tags are separate maintainer actions. Never rewrite shared history
-to rename old commits or upload ignored local env files.
+Temporary branches may be deleted once their commits are confirmed in `dev`;
+deleting the branch leaves merged commits and files intact. Keep the merged
+history instead of resetting branches to hide merge commits.
+
+When the full batch is ready, the user can request a GitLab `dev` -> `main` MR
+for the senior reviewer. Do not open or merge that MR early. Promotion of either
+`main` branch and deployment tags are separate explicit actions. Never upload
+ignored local env files.
 
 ## Data and integration limits
 
