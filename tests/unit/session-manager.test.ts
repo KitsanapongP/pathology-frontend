@@ -111,7 +111,7 @@ it("retries HTTP 401 only once, shares refresh, and clears on a second 401", asy
     const good = new Headers(init?.headers).get("Authorization") === "Bearer synthetic-access-2";
     return Response.json(good ? { message: "OK", status: "success", status_code: 200, data: [] } : { message: "Expired", status: "error", status_code: 401, error_code: "auth.expired", request_id: "synthetic" }, { status: good ? 200 : 401 });
   });
-  const api = createApiClient({ baseUrl: "http://localhost:8088", getAccessToken: s.session.getAccessToken, getLanguage: () => "th", onUnauthorized: s.session.recover, onAuthenticationFailure: s.session.clear, getSessionGeneration: s.session.getGeneration, fetch: fetcher });
+  const api = createApiClient({ baseUrl: "http://localhost:9100", getAccessToken: s.session.getAccessToken, getLanguage: () => "th", onUnauthorized: s.session.recover, onAuthenticationFailure: s.session.clear, getSessionGeneration: s.session.getGeneration, fetch: fetcher });
   await Promise.all([api.request("users"), api.request("users")]);
   expect(s.refresh).toHaveBeenCalledTimes(1);
   expect(fetcher).toHaveBeenCalledTimes(4);
@@ -125,7 +125,7 @@ it("does not expose a response from the session that logged out during the reque
   const s = setup(); s.session.accept(tokens());
   let resolve!: (response: Response) => void;
   const fetcher = vi.fn<typeof fetch>().mockImplementation(() => new Promise(done => { resolve = done; }));
-  const api = createApiClient({ baseUrl: "http://localhost:8088", getAccessToken: s.session.getAccessToken, getLanguage: () => "th", getSessionGeneration: s.session.getGeneration, fetch: fetcher });
+  const api = createApiClient({ baseUrl: "http://localhost:9100", getAccessToken: s.session.getAccessToken, getLanguage: () => "th", getSessionGeneration: s.session.getGeneration, fetch: fetcher });
   const pending = api.request("users");
   await vi.waitFor(() => expect(fetcher).toHaveBeenCalled());
   await s.session.logout();

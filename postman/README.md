@@ -5,14 +5,16 @@ explicitly documented in the supplied backend base-URL handoff. Import this and
 `test.postman_environment.json`, select the environment, and fill in the approved
 base URLs from the backend team to test connectivity. An optional `dev.local.json`
 can hold local-only values; it is ignored by Git and is not included in a clone. The local
-original handoff equivalents were `http://localhost:9100/v1` for portal and
+base URLs are `http://localhost:9100/v1` for portal and
 `http://localhost:8000/v1` for request. Base URLs already include `/v1`.
 
 Start with Portal health. A request-service health response does not mean its
 business APIs are ready. Dev requires the backend network/VPN. Credentials should
 not be sent until the team confirms an approved transport: the handoff currently
-specifies HTTP, not HTTPS. The current frontend task supersedes the old portal
-port with `http://localhost:8088/v1`. See `docs/api-client.md` and `docs/session.md`.
+specifies HTTP, not HTTPS. The latest Base URL handoff confirms portal port 9100
+and request port 8000 locally and on the dev IP, with prod domains still pending.
+Keep the actual private dev IP in ignored local environments. See
+`docs/api-client.md` and `docs/session.md`.
 Auth is now wired in the frontend; this collection still contains health checks
 only and has not executed real login requests.
 

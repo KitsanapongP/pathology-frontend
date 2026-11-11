@@ -11,7 +11,7 @@ it("renders validation from an HTTP response beneath its own form field as acces
     message: "ตรวจสอบข้อมูล", status: "error", status_code: 422, error_code: "users.username_already_exists", request_id: "synthetic",
     errors: { username: ["ชื่อผู้ใช้ซ้ำ", "<script>text only</script>"], password: ["รหัสผ่านสั้นเกินไป"] },
   }, { status: 422 }));
-  const api = createApiClient({ baseUrl: "http://localhost:8088", getAccessToken: () => "synthetic", getLanguage: () => "th", fetch: fetcher });
+  const api = createApiClient({ baseUrl: "http://localhost:9100", getAccessToken: () => "synthetic", getLanguage: () => "th", fetch: fetcher });
   function Form() {
     const [error, setError] = useState<ApiError | null>(null);
     return <form onSubmit={async event => { event.preventDefault(); setError(null); try { await api.request("users", { body: {} }); } catch (error) { if (error instanceof ApiError) setError(error); } }}>
@@ -30,7 +30,7 @@ it("renders validation from an HTTP response beneath its own form field as acces
 });
 
 it("uses the portal preference store and current in-memory token in the shared browser client", async () => {
-  vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:8088");
+  vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:9100");
   const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => Response.json({ message: "OK", status: "success", status_code: 200, data: [] }));
   vi.stubGlobal("fetch", fetcher);
   try {

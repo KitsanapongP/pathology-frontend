@@ -31,6 +31,13 @@ it("maps users.wrong_password onto the old-password field by code", async () => 
   expect(screen.getByText("Backend translated text")).toBeVisible();
   expect(mocks.clear).not.toHaveBeenCalled();
 });
+
+it("counts Unicode characters when enforcing the eight-character minimum", () => {
+  render(<ChangePasswordForm />); fill("synthetic-old", "😀".repeat(4));
+  fireEvent.submit(screen.getByRole("form"));
+  expect(screen.getByLabelText("รหัสผ่านใหม่", { exact: true })).toHaveAccessibleDescription("รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร");
+  expect(mocks.request).not.toHaveBeenCalled();
+});
 it("sends only contract fields, blocks duplicate submit, and ends the session with a login notice", async () => {
   let resolve!: (value: unknown) => void;
   mocks.request.mockImplementation(() => new Promise(done => { resolve = done; }));

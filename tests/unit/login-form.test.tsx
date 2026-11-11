@@ -44,6 +44,31 @@ it("uses auth.invalid_credentials regardless of the translated backend message",
   expect(mocks.replace).not.toHaveBeenCalled();
 });
 
+it("blocks values over Swagger's limits without submitting or truncating the password", () => {
+  render(<LoginForm />);
+  const username = "u".repeat(101);
+  const password = "p".repeat(257);
+  fireEvent.change(screen.getByLabelText("ชื่อผู้ใช้"), { target: { value: username } });
+  fireEvent.change(screen.getByLabelText("รหัสผ่าน"), { target: { value: password } });
+  fireEvent.submit(screen.getByRole("form"));
+  expect(screen.getByLabelText("ชื่อผู้ใช้")).toHaveAccessibleDescription("ชื่อผู้ใช้ต้องไม่เกิน 100 ตัวอักษร");
+  expect(screen.getByLabelText("รหัสผ่าน")).toHaveAccessibleDescription("รหัสผ่านต้องไม่เกิน 256 ตัวอักษร");
+  expect(screen.getByLabelText("รหัสผ่าน")).toHaveValue(password);
+  expect(mocks.request).not.toHaveBeenCalled();
+});
+
+it.each(["x", "😀"])("allows exact Swagger character boundaries using %s", async character => {
+  mocks.request.mockResolvedValue({ data: tokens });
+  render(<LoginForm />);
+  const username = character.repeat(100);
+  const password = character.repeat(256);
+  fireEvent.change(screen.getByLabelText("ชื่อผู้ใช้"), { target: { value: username } });
+  fireEvent.change(screen.getByLabelText("รหัสผ่าน"), { target: { value: password } });
+  fireEvent.submit(screen.getByRole("form"));
+  await waitFor(() => expect(mocks.accept).toHaveBeenCalled());
+  expect(mocks.request).toHaveBeenCalledWith("auth/login", expect.objectContaining({ body: { username, password } }));
+});
+
 it.each([false, true])("hands the token set to session and routes must_change_password=%s correctly", async forced => {
   const data = { ...tokens, must_change_password: forced };
   mocks.request.mockResolvedValue({ data });

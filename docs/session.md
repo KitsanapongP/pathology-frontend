@@ -77,6 +77,9 @@ covered by Task 4's combined synthetic flow; live backend verification is pendin
 
 The root login page now submits `POST /v1/auth/login` with
 `{ username, password }` and `auth: false`; required fields are checked locally.
+The latest Swagger also limits username to 100 and password to 256 Unicode
+characters, enforced before submission. The password-change minimum of 8 also
+counts Unicode characters rather than UTF-16 units. Passwords are not truncated.
 It accepts the supplied token-set contract, passes tokens and request start time
 to `portalSession.accept`, and replaces navigation with `/portal` or
 `/change-password`. The previous Student/Professor and Admin demo navigation

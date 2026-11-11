@@ -6,15 +6,15 @@ function setup() {
   const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => Response.json(success));
   let token: string | null = "first-token";
   let language: "th" | "en" = "th";
-  const api = createApiClient({ baseUrl: "http://localhost:8088", getAccessToken: () => token, getLanguage: () => language, fetch: fetcher });
+  const api = createApiClient({ baseUrl: "http://localhost:9100", getAccessToken: () => token, getLanguage: () => language, fetch: fetcher });
   return { api, fetcher, token: (value: string | null) => { token = value; }, language: (value: "th" | "en") => { language = value; } };
 }
 afterEach(() => vi.unstubAllGlobals());
 
 describe("API transport", () => {
-  it("normalizes local and nginx origins with exactly one /v1 prefix", () => {
-    expect(apiBaseUrl("http://localhost:8088/v1/")).toBe("http://localhost:8088/v1/");
-    expect(apiBaseUrl("http://api-dev.example.test")).toBe("http://api-dev.example.test/v1/");
+  it("normalizes local, dev IP and prod origins with exactly one /v1 prefix", () => {
+    expect(apiBaseUrl("http://localhost:9100/v1/")).toBe("http://localhost:9100/v1/");
+    expect(apiBaseUrl("http://192.0.2.10:9100/v1")).toBe("http://192.0.2.10:9100/v1/");
     expect(apiBaseUrl("http://api.example.test/v1")).toBe("http://api.example.test/v1/");
     for (const url of [undefined, "ftp://api.example.test", "http://user:pass@example.test", "http://example.test/path", "http://example.test?x=1"]) {
       expect(() => apiBaseUrl(url)).toThrow();
@@ -23,7 +23,7 @@ describe("API transport", () => {
   it("reads current credentials and language per request and prevents header overrides", async () => {
     const s = setup();
     expect(await s.api.request("/v1/users?page=2")).toEqual(success);
-    expect(s.fetcher.mock.calls[0][0]).toBe("http://localhost:8088/v1/users?page=2");
+    expect(s.fetcher.mock.calls[0][0]).toBe("http://localhost:9100/v1/users?page=2");
     expect(new Headers(s.fetcher.mock.calls[0][1]?.headers).get("Authorization")).toBe("Bearer first-token");
     s.token("refreshed-token"); s.language("en");
     await s.api.request("users", { body: { name: "synthetic" }, headers: { Authorization: "bad", "Accept-Language": "fr" } });

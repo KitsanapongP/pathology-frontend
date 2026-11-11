@@ -13,6 +13,10 @@
   username/password form and its submit button fit with no horizontal overflow.
   Demo role navigation is gone. The existing login page branding/footer remains.
   All 14 synthetic browser checks passed, including password-change/re-login.
+- Latest Swagger alignment: all 15 synthetic browser checks passed, including
+  username/password length errors beneath their respective fields and submission
+  at the allowed boundaries. Unit tests additionally check Unicode character
+  boundaries for login and password change. The page layout is unchanged.
 
 ## Previous portal checks
 

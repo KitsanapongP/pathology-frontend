@@ -28,7 +28,7 @@ export default function ChangePasswordForm() {
     if (request.current) return;
     const next: FieldErrors = {};
     if (!oldPassword) next.old_password = [t("กรุณาระบุรหัสผ่านเดิม")];
-    if (newPassword.length < 8) next.new_password = [t("รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร")];
+    if (Array.from(newPassword).length < 8) next.new_password = [t("รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร")];
     if (!confirmation || confirmation !== newPassword) next.confirm_password = [t("รหัสผ่านใหม่และการยืนยันไม่ตรงกัน")];
     setErrors(next); setApiError(null); setFailure("");
     if (Object.keys(next).length) return;

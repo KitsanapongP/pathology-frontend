@@ -63,6 +63,23 @@ test("new user changes password, signs in again with it and is not forced twice"
   await expect(page).toHaveURL("/portal");
 });
 
+test("login displays Swagger length limits under the correct fields before sending", async ({ page }) => {
+  let logins = 0;
+  await page.route("http://api.e2e.test/v1/auth/login", route => { logins++; return route.fulfill({ json: success(tokenData()) }); });
+  await page.goto("/");
+  await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("u".repeat(101));
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill("p".repeat(257));
+  await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
+  await expect(page.getByLabel("ชื่อผู้ใช้", { exact: true })).toHaveAccessibleDescription("ชื่อผู้ใช้ต้องไม่เกิน 100 ตัวอักษร");
+  await expect(page.getByLabel("รหัสผ่าน", { exact: true })).toHaveAccessibleDescription("รหัสผ่านต้องไม่เกิน 256 ตัวอักษร");
+  expect(logins).toBe(0);
+  await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("u".repeat(100));
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill("p".repeat(256));
+  await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
+  await expect(page).toHaveURL("/portal");
+  expect(logins).toBe(1);
+});
+
 for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 1244 }, { width: 390, height: 844 }]) {
   test(`login form fits ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);

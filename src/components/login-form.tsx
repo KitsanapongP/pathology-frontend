@@ -26,7 +26,9 @@ export default function LoginForm() {
     if (request.current) return;
     const next: FieldErrors = {};
     if (!username.trim()) next.username = [t("กรุณาระบุชื่อผู้ใช้")];
+    else if (Array.from(username.trim()).length > 100) next.username = [t("ชื่อผู้ใช้ต้องไม่เกิน 100 ตัวอักษร")];
     if (!password) next.password = [t("กรุณาระบุรหัสผ่าน")];
+    else if (Array.from(password).length > 256) next.password = [t("รหัสผ่านต้องไม่เกิน 256 ตัวอักษร")];
     setErrors(next); setApiError(null); setFeedback("");
     if (Object.keys(next).length) return;
     const controller = new AbortController(); request.current = controller; setPending(true);

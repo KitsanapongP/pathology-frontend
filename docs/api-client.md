@@ -12,13 +12,14 @@ ESLint rejects direct fetch/XMLHttpRequest calls and axios imports elsewhere in
 Copy `.env.example` to `.env.local` for local Next development:
 
 ```dotenv
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8088
+NEXT_PUBLIC_API_BASE_URL=http://localhost:9100
 ```
 
-For dev and prod, set this variable to the actual API nginx subdomain using
-`http://` while that infrastructure serves HTTP. Do not use the local 8088 port
-on those environments. The actual hostnames have not been supplied; obtain them
-from backend rather than committing guessed values. `/v1` is added exactly once;
+This is the portal service when backend runs on the same machine. Dev uses
+`http://<DEV_IP>:9100` over the same network/VPN; it does not have a subdomain yet.
+Put the actual dev IP supplied by backend in ignored `.env.local`, not repository
+files. Prod uses `http://portal.<domain>`; the domain is still pending. The latest
+Base URL handoff confirms HTTP in all environments. `/v1` is added exactly once;
 an env value ending in `/v1` is also accepted. Missing/invalid config fails on
 the first API call with an actionable configuration error; fixture-only builds
 remain usable without API configuration.
@@ -26,7 +27,9 @@ remain usable without API configuration.
 `NEXT_PUBLIC_*` is public and frozen at build time. Set it in CI before
 `npm run build`. Compose forwards the variable as a build argument (copy the
 example to `.env` for Compose); direct Docker builds use
-`docker build --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:8088 .`.
+`docker build --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:9100 .`.
+Compose reads `.env`, not Next's `.env.local`; supply the intended browser-facing
+API origin to Compose separately. Restart `next dev` after changing env files.
 Rebuild when changing the API origin. No credentials belong in build arguments.
 GitHub Pages builds read the repository Actions variable
 `NEXT_PUBLIC_API_BASE_URL`; set its approved API URL in GitHub before expecting
@@ -47,9 +50,9 @@ not automatically retry writes. Public auth requests bypass the refresh hook.
 import { portalApi } from "@/lib/portal-api";
 import { ApiError } from "@/lib/api-client";
 
-// Illustrative paths and DTOs only: confirm these with the backend contract.
+// User endpoint paths match Swagger; User/values must use the endpoint's DTO.
 const result = await portalApi.request<User>("users/123", { signal });
-const list = await portalApi.paginated<User>("users?page=1&page_size=20", { signal });
+const list = await portalApi.paginated<User>("users?page=1&size=20", { signal });
 // result.data; list.data; list.pagination.total_records
 try {
   await portalApi.request<User>("users", { method: "POST", body: values, signal });
@@ -65,7 +68,7 @@ try {
 
 Every authenticated request reads the latest token and `th`/`en` portal preference
 and sends `Authorization: Bearer …` plus `Accept-Language`. Without a token it
-fails before network I/O. Only public endpoints such as the future login may
+fails before network I/O. Only public endpoints such as login and refresh may
 explicitly pass `{ auth: false }`; these still send the language header. Custom
 headers cannot override authorization/language. JSON bodies are serialized;
 `FormData` leaves multipart boundaries to fetch. Paths stay within the configured
@@ -79,6 +82,12 @@ returns the envelope; `paginated<T>` also validates an array `data` and
 types describe the endpoint contract; they do not runtime-validate business data.
 An empty/non-JSON/malformed success is `client.invalid_response` (including a 204,
 which is outside the supplied envelope contract).
+
+The portal owns auth, current-user profile and user management. Request service
+has a separate base URL (`http://localhost:8000/v1` locally and
+`http://<DEV_IP>:8000/v1` in dev); its business API is not ready. Do not send future
+request/grossing/matching/inventory calls to the portal client or invent their
+contracts. Add a separate configured service adapter only when its API is ready.
 
 ## Forms and errors
 
@@ -128,7 +137,7 @@ message was sent by this task; adding this file does not change live CORS.
 > headers `Authorization`, `Accept-Language`, `Accept`, `Content-Type`.
 > Expose `Retry-After` and `X-Request-ID` so browser clients can read them on 429
 > and proxy failures. Return CORS headers on errors as well as successful calls.
-> Confirm the real nginx API subdomains and verify an OPTIONS + authenticated
+> Use the confirmed dev IP/port and obtain the pending prod domain. Verify an OPTIONS + authenticated
 > request from each frontend origin. The client uses bearer auth without cookies.
 
 ## Verification
@@ -144,3 +153,31 @@ Verified on 2026-11-11: `npm run check` passed (lint, TypeScript, 24 Node tests,
 18 Vitest tests and production build). The existing Chromium language-preference
 reload test also passed against a fresh isolated production server on port 3100.
 No live backend request, CORS change or Docker image build was performed.
+
+## Updated contract review — 2026-11-11
+
+Reviewed the latest Base URL PDF and the live portal Swagger JSON at
+`/swagger/doc.json` (`dev-v0.2.0`). Auth methods/bodies, token fields, envelope
+fields and pagination match the implementation. Refresh's TokenResponse omits
+`must_change_password`; the session manager correctly preserves its existing
+restriction. LoginRequest limits username to 100 and password to 256 characters;
+local validation now enforces these Unicode character limits. User-list query
+parameters are `page` and `size`; the response continues to use `page_size`.
+
+Read-only dev checks: portal and request health returned 200. The actual shared
+client accepted portal health responses in Thai and English and the backend
+translated `message` according to Accept-Language. No auth credentials or writes
+were used, and no live response payloads/tokens were saved to this repository.
+
+The probed dev CORS response currently allows origin `*`; OPTIONS supports POST
+and PUT. Responses did not expose `Retry-After` or `X-Request-ID`, so reading those
+headers in a cross-origin browser still requires the backend handoff above.
+`Accept-Language: th/en` is a CORS-safelisted header; its absence in the explicit
+allow-headers list alone is not evidence that browser requests will fail. Exact
+auth error codes, refresh/logout behavior and 429 responses still require live
+integration with an approved synthetic account. Backend CORS was not modified.
+
+Updated checks passed: `npm run check` (25 Node tests, 59 Vitest tests, lint,
+TypeScript and production build) and all 15 isolated Chromium scenarios,
+including maximum-length rejection, exact-boundary acceptance and auth/session
+regression flows. No dependency changes or live auth writes were required.
