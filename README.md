@@ -1,148 +1,53 @@
 # Pathology Frontend
 
-## Docker, GitLab CI and tests
+Next.js App Router, React, TypeScript and Tailwind CSS. Requires Node.js 24 and npm.
 
-See [development setup](docs/development-setup.md) for local Docker, Vitest,
-Playwright, GitLab CI prerequisites and security boundaries. Postman setup is
-in [postman/README.md](postman/README.md); the real API contract is still required.
+## Start
 
-## Public demo on GitHub Pages
+On the first setup, copy `.env.example` to `.env.local` and configure the API URL.
+Keep private dev addresses and tokens out of Git.
 
-Demo URL: https://KitsanapongP.github.io/pathology-frontend/
-
-The `Deploy to GitHub Pages` workflow builds and deploys on pushes to `main`.
-The repository's Settings → Pages must use **GitHub Actions** as the source.
-This is the UI demo described below; data is stored locally in each browser,
-not shared between visitors.
-
-The workflow sets `GITHUB_PAGES=true` and
-`NEXT_PUBLIC_BASE_PATH=/pathology-frontend` to export the site into `.next-pages/`.
-Normal `npm run dev` continues to serve at the root of localhost.
-
-Frontend starter for the pathology platform, with a demo role selector,
-an admin dashboard, and a Student / Professor workspace.
-
-## Stack
-
-- Next.js (App Router)
-- TypeScript
-- Tailwind CSS
-
-## Requirements
-
-- Node.js 24 LTS
-- npm
-
-## Local development
-
-```bash
+```powershell
 npm ci
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000. The normal login form uses the portal API.
+`NEXT_PUBLIC_AUTH_MODE=demo` adds small skip-login shortcuts for Student /
+Professor and Admin; `api` hides them. Business modules currently use synthetic
+fixtures, with local edits/reports stored in browser memory, sessionStorage or
+IndexedDB. They are not hospital submissions.
 
-## Checks and production
+## Checks
 
-```bash
-npm run lint
-npm run typecheck
-npm run build
-npm start
+```powershell
+npm run check
+npx --no-install playwright install chromium
+npm run test:e2e
+npm run test:e2e:demo
 ```
 
-The login page at `/` temporarily provides two mock login buttons:
+Run the two browser commands separately; both use an isolated production server
+on port 3100. For a normal production server, run `npm run build` then `npm start`.
 
-- Student / Professor opens the module portal at `/portal`.
-- Admin opens the existing dashboard at `/portal/admin`.
+## Guides
 
-Both buttons work without credentials. Pressing Enter defaults to Student / Professor.
-This role selector is temporary and should be replaced by the primary login
-button and server-verified role routing when authentication is integrated.
-This is a UI demo: there is no authentication or route protection yet.
-SSO is disabled until a real integration is available.
+- [Development](docs/development-setup.md): tests, Docker, CI, branches and MR workflow.
+- [API and authentication](docs/api-client.md): configuration, client, errors and sessions.
+- [Examination interaction](docs/examinations-interaction-spec.md) and [QA](docs/examinations-qa.md): pedal/voice workflow and hardware limits.
+- [OCR mapping](docs/ocr-api-mapping.md): request schema and pending business API contract.
+- [Portal QA](docs/portal-ui-qa.md): layout/language checks.
+- [Postman](postman/README.md): health checks only.
 
-The dashboard uses sample counts, requests, service health, and logs.
-Log filters, search, detail dialogs, navigation previews, and the account menu
-work locally. Refresh updates the display time; it does not fetch service health.
+## Preview and modules
 
-The Student / Professor portal provides four module entry cards. The first
-opens `/portal/requests`, the second opens `/portal/examinations`, the third
-opens `/portal/matching`, and the fourth opens `/portal/storage`.
+[GitHub Pages preview](https://KitsanapongP.github.io/pathology-frontend/) updates
+when GitHub `main` is promoted. Its workflow uses a static export with the
+repository base path; normal local development uses `/`.
 
-Request intake is a full-width directory using pathology request-form labels.
-It supports scoped search (name, HN, AN, accession), Ward/OPD and examination
-filters, date ranges, OCR/review states, sorting, pagination and review editing.
-Manual PDF/JPG/PNG selection (up to 10 MB per file) opens from a header button;
-there is no template download section. Local edits/files live in browser memory.
-Normal ingestion is scanner folder -> backend -> database -> request directory.
-The optional normalized snapshot loader supports refresh/polling once connected;
-no university endpoint, OCR parsing, upload or database write is wired yet.
-See `docs/ocr-api-mapping.md` for schema observations and the proposed handoff.
-All OCR examples are authored synthetic fixtures with no original patient data.
+Modules are `/portal/requests`, `/portal/examinations`, `/portal/matching` and
+`/portal/storage`; the admin dashboard is `/portal/admin`. Real login needs backend
+connectivity and a test account. Skip-login preview does not create auth tokens.
 
-## Examination workstation
-
-`/portal/examinations` has a bounded icon-based command rail. Left/right pedals
-cycle only the visible rail actions; center activates. Recording has five
-choices: voice mode, Part, save draft, review and tools. Part, voice mode,
-editing and other tools open dedicated choosers with their own target sets.
-Header controls, report content and ordinary fields are excluded from the cycle.
-
-Center hold (250ms) opens push-to-talk; release stops capture. Left double-tap
-backs/closes; right double-tap toggles help. F13/F14/F15 are hardware keys and
-F8/F9/F10 are test aliases. Final confirmation requires selecting its button,
-holding center 1.5 seconds, then releasing. There is no always-on microphone.
-
-Try request `0038` (say ศูนย์ ศูนย์ สาม แปด) or `0036`. Thai speech uses a removable
-browser SpeechRecognition adapter (`th-TH`); browser services may process audio
-remotely. Prepare browser microphone permission before hands-free use. Text and
-audio are saved locally in IndexedDB; confirmation does not submit to a backend.
-
-See [the interaction spec](docs/examinations-interaction-spec.md) and
-[the QA record](docs/examinations-qa.md). Run `npm run test:examinations` for
-controller/STT-adapter tests without a microphone or network.
-
-## Slide and cassette matching
-
-`/portal/matching` includes a tray image with clickable slot overlays,
-filterable QR results, bulk selection, manual pairing, draft persistence,
-and confirmation. Duplicate or unreadable codes and missing request links
-cannot be confirmed. Confirmed rows are locked locally.
-
-The initial tray and associations are fixtures. Camera access is requested
-only after a user action; moving to a live camera clears fixture results.
-Scanning captures a frame and uses the browser's `BarcodeDetector` when
-available. Unsupported browsers show the captured frame and an error,
-without simulated detection results. Real QR lookup and validation still
-require the backend. No confidence percentage is invented for browser scans.
-
-Drafts, including the current frame, are saved in this tab's `sessionStorage`.
-Camera tracks are stopped after capture and on unmount. Frames and patient
-data are not uploaded to any external service by this frontend.
-
-The project asset `public/images/slide-tray.png` was generated using the
-built-in ImageGen tool. Prompt: An orthographic overhead photograph of a
-black laboratory tray with exactly eight columns and four rows of vertical
-glass microscope slides, small white QR-like labels and purple/pink histology
-stains, realistic neutral clinical light, aligned grid, no text, numbered
-badges, colored borders, interface, hands, people, or watermarks.
-
-The login page is in `src/app/page.tsx`. Global styles are in
-`src/app/globals.css`, and the root layout is in `src/app/layout.tsx`.
-
-This starter does not require environment variables or a backend service.
-
-## Background asset
-
-`public/images/campus-background.png` was generated using the built-in ImageGen tool.
-Prompt: A photorealistic modern Thai university medical campus, white buildings
-on the left, a white clock tower on the right, tropical trees, a stone plaza and
-reflecting pool, soft morning light and pale blue sky, wide 16:9 composition with
-open central space. No people, text, logos, signage, or watermarks.
-
-### Storage directory
-- `/portal/storage`: choose examination containers or slide request boxes.
-- `/portal/storage/examinations` and `/portal/storage/requests`: searchable local fixtures, date/status filters, pagination, selected details, location editing and printing.
-- Box loans and returns require explicit confirmation; changes persist in sessionStorage for the current tab. Source fixtures are separate from live examination and matching records until storage APIs are supplied. Record detail dialogs do not fabricate clinical report content.
-- Container and box illustrations are original SVG components. Backend storage locations, QR manifests, audit history and concurrent inventory validation are pending integration.
+The campus background and slide-tray PNGs were generated with ImageGen; container
+and box illustrations are project SVGs. No private patient scans belong in fixtures.

@@ -29,10 +29,10 @@ export default function ExaminationPedal({ pressed, suggested, compact, onPress,
             const active = pressed === pedal;
             return <g key={pedal} transform={`translate(${x} ${active ? 5 : 0})`}>
               <rect x="-7" y="48" width="155" height="166" rx="13" fill="#101a1d" />
-              <rect x="-3" y="43" width="147" height="162" rx="11" fill={`url(#${id}-key)`} stroke={active || suggested === pedal ? pedalBindings[pedal].color : "#596367"} strokeWidth={active ? 3 : 1.5} />
+              <rect x="-3" y="43" width="147" height="162" rx="11" fill={`url(#${id}-key)`} stroke={active || suggested === pedal ? pedalBindings[pedal].highlightColor : "#596367"} strokeWidth={active ? 3 : 1.5} />
               <rect x="9" y="55" width="123" height="132" rx="6" fill={`url(#${id}-grip)`} />
               <path d="M6 112h126" stroke="#181f22" strokeWidth="2" />
-              <rect x="34" y="188" width="74" height="4" rx="2" fill={pedalBindings[pedal].color} opacity={active || suggested === pedal ? 1 : .7} />
+              <rect x="34" y="188" width="74" height="4" rx="2" fill={pedalBindings[pedal].highlightColor} opacity={active || suggested === pedal ? 1 : .7} />
             </g>;
           })}
           <circle cx="45" cy="70" r="3" fill="#7b8587" /><circle cx="675" cy="70" r="3" fill="#7b8587" />

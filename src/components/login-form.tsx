@@ -1,70 +1,73 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-
-function Icon({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`size-5 shrink-0 ${className}`}>
-      {children}
-    </svg>
-  );
-}
+import { ApiError, apiErrorMessage, type FieldErrors } from "@/lib/api-client";
+import { portalApi, portalSession } from "@/lib/portal-api";
+import { passwordChangePath, type SessionTokens } from "@/lib/session-manager";
+import LoginNotice from "./login-notice";
+import PasswordField from "./password-field";
+import { usePortalLanguage } from "./portal-preferences";
 
 export default function LoginForm() {
+  const { t } = usePortalLanguage();
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [apiError, setApiError] = useState<ApiError | null>(null);
+  const [feedback, setFeedback] = useState("");
+  const [pending, setPending] = useState(false);
+  const request = useRef<AbortController | null>(null);
+  useEffect(() => () => request.current?.abort(), []);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // Temporary mock role navigation. Replace with the real login flow later.
-    // No credentials or role claims are sent or stored.
-    router.push("/portal");
+    if (request.current) return;
+    const next: FieldErrors = {};
+    if (!username.trim()) next.username = [t("กรุณาระบุชื่อผู้ใช้")];
+    else if (Array.from(username.trim()).length > 100) next.username = [t("ชื่อผู้ใช้ต้องไม่เกิน 100 ตัวอักษร")];
+    if (!password) next.password = [t("กรุณาระบุรหัสผ่าน")];
+    else if (Array.from(password).length > 256) next.password = [t("รหัสผ่านต้องไม่เกิน 256 ตัวอักษร")];
+    setErrors(next); setApiError(null); setFeedback("");
+    if (Object.keys(next).length) return;
+    const controller = new AbortController(); request.current = controller; setPending(true);
+    const startedAt = Date.now();
+    const generation = portalSession.getGeneration();
+    try {
+      const response = await portalApi.request<SessionTokens>("auth/login", {
+        method: "POST", auth: false, body: { username: username.trim(), password }, signal: controller.signal,
+      });
+      controller.signal.throwIfAborted();
+      if (generation !== portalSession.getGeneration()) return;
+      portalSession.accept(response.data, startedAt);
+      setPassword("");
+      router.replace(response.data.must_change_password ? passwordChangePath : "/portal");
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      if (error instanceof ApiError) {
+        setApiError(error); setErrors(error.fieldErrors);
+        if (error.errorCode === "auth.invalid_credentials") setFeedback(t("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"));
+      } else setFeedback(t("เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง"));
+    } finally {
+      if (request.current === controller) request.current = null;
+      if (!controller.signal.aborted) setPending(false);
+    }
   }
-
-  return (
-    <form onSubmit={handleSubmit} className="mt-8" aria-label="เข้าสู่ระบบพยาธิวิทยา">
+  const message = feedback || (apiError ? apiErrorMessage(apiError) : "");
+  return <form noValidate onSubmit={submit} className="mt-7" aria-label={t("เข้าสู่ระบบพยาธิวิทยา")} aria-busy={pending} aria-describedby={message ? "login-error" : undefined}>
+    <LoginNotice />
+    <fieldset disabled={pending} className="space-y-5">
       <div>
-        <label htmlFor="username" className="mb-2 block text-sm font-semibold text-[#102d58]">ชื่อผู้ใช้ / อีเมล</label>
-        <div className="login-field">
-          <Icon><path d="M20 21v-2a7 7 0 0 0-14 0v2" /><circle cx="13" cy="7" r="4" /></Icon>
-          <input id="username" name="username" type="text" autoComplete="username" placeholder="ระบุชื่อผู้ใช้หรืออีเมลของคุณ" className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-[#102d58] outline-none placeholder:text-[#8795ac]" />
-        </div>
+        <label htmlFor="username" className="mb-2 block text-sm font-semibold text-[#102d58]">{t("ชื่อผู้ใช้")}</label>
+        <div className="login-field"><input id="username" name="username" type="text" required autoComplete="username" autoCapitalize="none" spellCheck={false}
+          value={username} onChange={event => setUsername(event.target.value)} aria-invalid={!!errors.username?.length} aria-describedby={errors.username?.length ? "username-errors" : undefined}
+          className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-[#102d58] outline-none" /></div>
+        {errors.username?.length ? <div id="username-errors" role="alert" className="mt-2 text-sm text-red-700">{errors.username.map((error, index) => <p key={index}>{error}</p>)}</div> : null}
       </div>
-
-      <div className="mt-5">
-        <label htmlFor="password" className="mb-2 block text-sm font-semibold text-[#102d58]">รหัสผ่าน</label>
-        <div className="login-field">
-          <Icon><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" /></Icon>
-          <input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="ระบุรหัสผ่านของคุณ" className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-[#102d58] outline-none placeholder:text-[#8795ac]" />
-          <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"} aria-pressed={showPassword} className="rounded p-1.5 transition hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
-            <Icon><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" />{showPassword && <path d="m3 3 18 18" />}</Icon>
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-3 flex justify-end">
-        <button type="button" aria-expanded={showHelp} aria-controls="password-help" onClick={() => setShowHelp(!showHelp)} className="rounded text-sm font-medium text-[#1556b8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">ลืมรหัสผ่าน?</button>
-      </div>
-      {showHelp && <p id="password-help" role="status" className="mt-3 rounded-lg bg-blue-50 px-4 py-3 text-sm leading-6 text-[#516482]">กรุณาติดต่อผู้ดูแลระบบเพื่อขอความช่วยเหลือในการตั้งรหัสผ่านใหม่</p>}
-
-      <button type="submit" className="mt-5 flex min-h-12 w-full items-center justify-center gap-3 rounded-lg bg-gradient-to-b from-[#123e7c] to-[#082958] px-4 py-3 text-base font-semibold text-white shadow-sm transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">
-        <Icon><path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5M3 12h13m-5-5 5 5-5 5" /></Icon>
-        เข้าสู่ระบบ Student / Professor
-      </button>
-
-      <button type="button" onClick={() => router.push("/portal/admin")} className="mt-3 flex min-h-12 w-full items-center justify-center gap-3 rounded-lg border border-[#b8cbea] bg-[#f2f6fc] px-4 py-3 text-sm font-semibold text-[#164579] transition hover:bg-[#e7effa] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">
-        <Icon><path d="m12 3 8 4v6c0 5-8 9-8 9s-8-4-8-9V7l8-4Z" /><path d="m8 12 3 3 5-5" /></Icon>
-        เข้าสู่ระบบ Admin
-      </button>
-
-      <div className="my-4 flex items-center gap-3 text-sm text-[#71809a]"><span className="h-px flex-1 bg-[#dce3ed]" />หรือ<span className="h-px flex-1 bg-[#dce3ed]" /></div>
-
-      <button type="button" disabled className="flex min-h-16 w-full items-center justify-center gap-3 rounded-lg border border-[#b9cdec] bg-[#edf4ff] px-4 py-2.5 text-[#536c90] disabled:cursor-not-allowed">
-        <Icon className="size-7"><path d="m2 8 10-5 10 5H2Zm2 12h16M2 23h20M5 11v6m5-6v6m4-6v6m5-6v6" /></Icon>
-        <span className="text-left"><span className="block text-base font-semibold">เข้าสู่ระบบด้วย SSO</span><span className="mt-0.5 block text-xs">สำหรับบุคลากรของหน่วยงาน · เร็ว ๆ นี้</span></span>
-      </button>
-    </form>
-  );
+      <PasswordField id="password" label="รหัสผ่าน" value={password} onChange={setPassword} errors={errors.password} autoComplete="current-password" />
+      {message && <p id="login-error" role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p>}
+      <button type="submit" className="min-h-12 w-full rounded-lg bg-[#10396f] px-4 py-3 text-base font-semibold text-white disabled:opacity-60">{t(pending ? "กำลังเข้าสู่ระบบ" : "เข้าสู่ระบบ")}</button>
+    </fieldset>
+  </form>;
 }

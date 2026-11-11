@@ -80,3 +80,7 @@ Form terminology is based on labels only in the supplied request form image. No 
 Rechecked the trailing root `text` and last page `plain_text`. The bottom section includes Radiographic finding, Clinical diagnosis, specimen count, next appointment, additional requirements, Infectious precaution, and a final requesting-doctor/telephone line. The final phone is represented separately as `requestingDoctorPhone`; `collectorPhone` belongs to the specimen collector. Original contact details and checkbox selections are not copied into fixtures. Checked/unchecked markers are source extraction signals for the backend, not labels to infer from word presence.
 
 The list omits the OCR status column; OCR status remains only in the advanced filter and internal workflow gates, not the record detail summary. Synthetic patient names have varied given names, prefixes and surnames from `mock-patient.ts`; request rows and OCR example text/tables use the same identity.
+
+## Detailed synthetic referral fixture — 8 November 2026
+
+`pathology.referralNote` is a proposed optional frontend field for a referring-doctor note. The expanded 0038 fixture in `request-demo-0038.ts` is entirely authored for UI testing, not extracted OCR or an API response. It includes multi-paragraph clinical history/referral text and simulated imaging/specimen details. `RequestRecord.isMock` identifies fixture provenance in the workstation. The prior-examination API remains unconnected; the narrative must not be mistaken for an imported prior pathology report.

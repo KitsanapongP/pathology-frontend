@@ -2,13 +2,9 @@
 
 import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 import { translate, type PortalLanguage } from "@/lib/portal-language";
+import { portalPreferencesSnapshot as snapshot, savePortalPreferences } from "@/lib/portal-preference-store";
 
-const key = "pathology:portal-preferences:v1";
 const defaults = { language: "th" as PortalLanguage, fontSize: 100 };
-let fallback = "";
-function snapshot() {
-  try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
-}
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
   window.addEventListener("portal-preferences", callback);
@@ -27,9 +23,7 @@ export default function PortalPreferences({ children }: { children: React.ReactN
     preferences = { language: saved.language === "en" ? "en" : "th", fontSize };
   } catch { /* Invalid or unavailable preferences use the Thai default. */ }
   function update(next: typeof defaults) {
-    fallback = JSON.stringify(next);
-    try { localStorage.setItem(key, fallback); } catch { /* Keep preferences for this tab when storage is unavailable. */ }
-    window.dispatchEvent(new Event("portal-preferences"));
+    savePortalPreferences(JSON.stringify(next));
   }
   useEffect(() => {
     document.documentElement.lang = preferences.language;

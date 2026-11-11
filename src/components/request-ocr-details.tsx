@@ -8,7 +8,7 @@ const choiceGroups = [
   ['operations', 'Operation', operationOptions], ['requirements', 'ระบุความต้องการเพิ่มเติม', requirementOptions],
   ['precautions', 'Infectious precaution', precautionOptions],
 ] as const;
-const multiline = new Set(['clinicalHistory', 'radiographicFindings', 'clinicalDiagnosis', 'specimen']);
+const multiline = new Set(['clinicalHistory', 'referralNote', 'radiographicFindings', 'clinicalDiagnosis', 'specimen']);
 export default function RequestOcrDetails({ result, fields, onChange }: { result?: OcrResult; fields: PathologyFields; onChange?: (value: PathologyFields) => void }) {
   const { t } = usePortalLanguage();
   const [pageIndex, setPageIndex] = useState(0);

@@ -10,6 +10,12 @@ services:
     # ต้องตรงกับ UPSTREAM_WEB ของ nginx ใน infra
     container_name: pathology-web
     restart: unless-stopped
+    # env ฝั่ง server (อ่านตอน runtime) — ไฟล์อยู่บน server เท่านั้น แม่แบบ deploy/<env>.env.example
+    # NEXT_PUBLIC_* ในไฟล์เดียวกันนี้มีผลตอน docker build เท่านั้น (CI ส่งเป็น --build-arg) ไม่ใช่ตอน runtime
+    # required: false ไว้ก่อนจนกว่า prod จะมี .env — dev บังคับมีไฟล์ด้วย CI แทน
+    env_file:
+      - path: ${ENV_FILE:-.env}
+        required: false
     # ไม่เปิด port — เข้าผ่าน nginx ของ infra (app.<NGINX_DOMAIN>)
     init: true
     security_opt:
