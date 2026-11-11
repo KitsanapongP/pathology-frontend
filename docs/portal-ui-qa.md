@@ -2,6 +2,12 @@
 
 ## Authentication additions — 11 November 2026
 
+- Temporary role preview restored at the user's request: visually inspected both
+  role buttons at 1280×720 and 1896×1244, with no clipping/overflow. Student /
+  Professor opens `/portal`; Admin opens `/portal/admin`. Both survive reload,
+  sign out and reject re-entry after logout, with zero backend calls. The API
+  login/password/session UI remains available with `NEXT_PUBLIC_AUTH_MODE=api`.
+
 - Task 3: visually inspected synthetic password-change screenshots at 1280×720
   and 1896×1244. The three labelled fields, submit and logout fit without clipping
   or horizontal overflow. The page has no portal header or foot-pedal targets.

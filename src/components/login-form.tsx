@@ -8,8 +8,14 @@ import { passwordChangePath, type SessionTokens } from "@/lib/session-manager";
 import LoginNotice from "./login-notice";
 import PasswordField from "./password-field";
 import { usePortalLanguage } from "./portal-preferences";
+import { isDemoAuth } from "@/lib/demo-session";
+import DemoLoginForm from "./demo-login-form";
 
 export default function LoginForm() {
+  return isDemoAuth() ? <DemoLoginForm /> : <ApiLoginForm />;
+}
+
+function ApiLoginForm() {
   const { t } = usePortalLanguage();
   const router = useRouter();
   const [username, setUsername] = useState("");

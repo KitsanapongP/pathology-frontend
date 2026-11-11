@@ -4,8 +4,21 @@ import { useEffect, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { portalSession } from "@/lib/portal-api";
 import { sessionDestination, type SessionState } from "@/lib/session-manager";
+import { demoDestination, demoSnapshot, isDemoAuth, subscribeDemo, type DemoState } from "@/lib/demo-session";
 
 export default function SessionGuard({ children }: { children: React.ReactNode }) {
+  return isDemoAuth() ? <DemoGuard>{children}</DemoGuard> : <ApiSessionGuard>{children}</ApiSessionGuard>;
+}
+
+function DemoGuard({ children }: { children: React.ReactNode }) {
+  const state = useSyncExternalStore(subscribeDemo, demoSnapshot, (): DemoState => "checking");
+  const router = useRouter();
+  const destination = demoDestination(state, usePathname());
+  useEffect(() => { if (destination) router.replace(destination); }, [destination, router]);
+  return state === "checking" || destination ? null : children;
+}
+
+function ApiSessionGuard({ children }: { children: React.ReactNode }) {
   const state = useSyncExternalStore(portalSession.subscribe, portalSession.getSnapshot, (): SessionState => "checking");
   const pathname = usePathname();
   const router = useRouter();

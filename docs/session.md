@@ -1,5 +1,39 @@
 # Browser session
 
+## Temporary role preview
+
+While backend accounts are unavailable, the user requested the original role
+entry buttons. Set `NEXT_PUBLIC_AUTH_MODE=demo` to show Student / Professor
+(`/portal`) and Admin (`/portal/admin`) entry without username/password. The local
+example, Compose and GitHub Pages preview enable this mode. Direct Docker builds
+and unset mode default to real API authentication. Like other public env values,
+the mode is fixed at build time: restart dev or rebuild after changing it.
+
+Demo persists only a tab-scoped role in `pathology:demo-session:v1`; it creates no
+access/refresh tokens, never starts real-session restoration and blocks service
+HTTP calls. Reload keeps the selected preview role; logout clears it and prevents
+entry until a role is chosen again. Student / Professor preview does not enter
+the Admin route. Demo cannot enter the mandatory-password-change route. Existing
+real sessions, preferences and clinical drafts are not modified by demo logout.
+
+To resume the implemented real-auth workflow, set `NEXT_PUBLIC_AUTH_MODE=api`
+and provide the API URL, then restart/rebuild. GitHub Pages must change its build
+env from demo to api when real-auth testing is ready. A stored demo role grants
+no access in API mode. The session behavior below describes API mode.
+
+`npm run test:e2e` always builds API mode and retains the real-auth mock tests.
+`npm run test:e2e:demo` independently builds demo mode and checks both role
+destinations, reload/logout and absence of backend calls against an isolated
+production server. These commands run sequentially because they share port 3100.
+
+Preview verification on 2026-11-11: `npm run check` passed (25 Node tests, 64
+Vitest tests, lint, TypeScript and production build). All 15 API-mode browser
+tests and four demo-mode browser tests passed in separate isolated server runs.
+GitHub Pages export built successfully; preview screenshots were inspected at
+1280×720 and 1896×1244. No live login or backend writes were performed.
+
+## API sessions
+
 The agreed storage policy is refresh token in `sessionStorage`, access token in
 memory. Reload restores access by `POST /v1/auth/refresh` with `{ refresh_token }`.
 Only the versioned `pathology:session:v1` entry is removed on session clear;
@@ -75,7 +109,7 @@ covered by Task 4's combined synthetic flow; live backend verification is pendin
 
 ## Credential login (Task 4)
 
-The root login page now submits `POST /v1/auth/login` with
+In API mode, the root login page submits `POST /v1/auth/login` with
 `{ username, password }` and `auth: false`; required fields are checked locally.
 The latest Swagger also limits username to 100 and password to 256 Unicode
 characters, enforced before submission. The password-change minimum of 8 also

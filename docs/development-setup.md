@@ -2,8 +2,10 @@
 
 The standard development flow remains `npm ci` followed by `npm run dev` with
 Node.js 24. Docker and browser testing are optional workflows described below.
-Business modules currently use fixtures. Portal routes require a session; live
-authentication needs the backend network/VPN and approved API configuration.
+Business modules currently use fixtures. The user-requested temporary demo mode
+provides Student / Professor and Admin entry while backend accounts are absent.
+Set `NEXT_PUBLIC_AUTH_MODE=demo` in `.env.local` (the example enables it). For real
+authentication set it to `api`; that needs backend/VPN and approved API configuration.
 Isolated browser tests mock auth with synthetic tokens and need no credentials.
 
 Repository files do not configure GitLab project settings, runners, secrets,
@@ -33,6 +35,10 @@ Install Chromium once, then run the browser suite:
 npx --no-install playwright install chromium
 npm run test:e2e
 ```
+
+The normal E2E command forces API authentication mode with mocked responses.
+Run `npm run test:e2e:demo` separately to verify the role preview; do not run both
+commands concurrently because both own loopback port 3100.
 
 If the tests fail immediately with `browserType.launch: Executable doesn't exist`,
 the browser binary is unavailable; no UI assertions have run yet. `npm ci`

@@ -2,6 +2,8 @@ export type PortalLanguage = "th" | "en";
 
 // Thai labels remain the canonical record/filter values. Translate presentation only.
 export const english: Record<string, string> = {
+  "เข้าสู่ระบบ Student / Professor": "Sign in as Student / Professor",
+  "เข้าสู่ระบบ Admin": "Sign in as Admin",
   "ชื่อผู้ใช้ต้องไม่เกิน 100 ตัวอักษร": "Username must not exceed 100 characters",
   "รหัสผ่านต้องไม่เกิน 256 ตัวอักษร": "Password must not exceed 256 characters",
   "รหัสผ่าน": "Password",

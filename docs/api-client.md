@@ -12,8 +12,14 @@ ESLint rejects direct fetch/XMLHttpRequest calls and axios imports elsewhere in
 Copy `.env.example` to `.env.local` for local Next development:
 
 ```dotenv
+NEXT_PUBLIC_AUTH_MODE=demo
 NEXT_PUBLIC_API_BASE_URL=http://localhost:9100
 ```
+
+The temporary demo setting restores the role preview buttons requested while no
+backend accounts are available; service HTTP calls are disabled in that mode.
+Set `NEXT_PUBLIC_AUTH_MODE=api` and restart/rebuild to use the auth/API client.
+Unspecified mode also uses API auth. See `docs/session.md` for both modes.
 
 This is the portal service when backend runs on the same machine. Dev uses
 `http://<DEV_IP>:9100` over the same network/VPN; it does not have a subdomain yet.

@@ -3,8 +3,14 @@
 import { createApiClient, type ApiRequestOptions } from "@/lib/api-client";
 import { portalLanguageSnapshot } from "@/lib/portal-preference-store";
 import { createSessionManager, type SessionTokens } from "@/lib/session-manager";
+import { isDemoAuth } from "@/lib/demo-session";
+
+function requireApiAuth() {
+  if (isDemoAuth()) throw new Error("Service HTTP calls are disabled in demo mode. Set NEXT_PUBLIC_AUTH_MODE=api and rebuild to use the backend.");
+}
 
 function transport(getAccessToken: () => string | null | Promise<string | null>) {
+  requireApiAuth();
   return createApiClient({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
     getAccessToken, getLanguage: portalLanguageSnapshot,
@@ -22,6 +28,7 @@ export const portalSession = createSessionManager({
 });
 
 function client() {
+  requireApiAuth();
   return createApiClient({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
     getAccessToken: portalSession.getAccessToken, getLanguage: portalLanguageSnapshot,
