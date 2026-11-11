@@ -59,6 +59,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Production: `npm run build`. A Turbopack CSS-worker startup failure has been observed in this environment. Do not report a successful production build based on browser smoke tests alone.
 - Inspect the current Git changes before editing. Preserve unrelated work, including the separate `pathologyplateformserverdevproduction/` directory.
 
+## Shared API transport
+
+- All pathology-portal-service HTTP calls must use `src/lib/portal-api.ts` in browser code, or a request-scoped `createApiClient` from `src/lib/api-client.ts` on the server. Do not add direct fetch/axios calls in pages or feature adapters. Existing fixtures stay local until real endpoint contracts are supplied.
+- Set `NEXT_PUBLIC_API_BASE_URL` before building; local is `http://localhost:8088`, dev/prod use the approved nginx subdomain. The client owns `/v1`. Auth supplies/clears the in-memory token with `setApiAccessToken`; never persist tokens in portal preferences. Only public endpoints explicitly use `auth: false`.
+- Branch on `ApiError.errorCode`, never `message`. Render backend messages as text without translating again. Use `ApiFieldErrors` with `aria-invalid`/`aria-describedby` for canonical backend field names, and `ApiErrorNotice` for general feedback, 5xx request IDs and 429 guidance. See `docs/api-client.md` for usage and the pending backend CORS handoff.
+
 ## Request directory
 
 - `/portal/requests` uses form labels and a full-width list. Keep manual upload in a dialog opened beside refresh; do not restore template downloads or the general-purpose category column/filter.

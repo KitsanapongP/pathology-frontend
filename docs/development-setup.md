@@ -102,6 +102,10 @@ not a complete security assessment. No registry credentials are needed yet.
 
 ## 4. API and Postman
 
+The shared HTTP client is documented in `docs/api-client.md`, including env/build
+configuration, auth/language headers, field validation and the backend CORS
+handoff. Fixtures remain local until actual endpoint contracts are integrated.
+
 See `postman/README.md`. Health checks use the supplied base-URL handoff; the dev
 IP may be configured in a Git-ignored `postman/dev.local.json`; this file is not
 included in a clone. Start with the committed blank environment template and
