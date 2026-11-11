@@ -1,10 +1,9 @@
 # pathology-portal-service API client
 
 All service HTTP traffic goes through `portalApi` in browser code. There were no
-existing HTTP calls to migrate when this foundation was added: login is still a
-demo and the modules use fixtures/IndexedDB. This task does not invent login,
-refresh, business endpoints, DTOs or upload contracts. Live page integration and
-validation acceptance against the actual service remain pending those contracts.
+existing HTTP calls to migrate when this foundation was added. Business modules
+still use fixtures/IndexedDB pending real endpoint contracts. Session management
+now uses the supplied refresh/logout endpoints; see `docs/session.md`.
 ESLint rejects direct fetch/XMLHttpRequest calls and axios imports elsewhere in
 `src`; native HTTP transport belongs in `src/lib/api-client.ts`.
 
@@ -34,11 +33,11 @@ coordinate matching schemes or HTTPS nginx before that deployment.
 
 ## Usage
 
-After the real auth flow obtains an access token, call `setApiAccessToken(token)`
-from `@/lib/portal-api`; call it again after refresh and with `null` on logout.
-The token stays in memory and is lost on reload. Session restoration/refresh is
-owned by the future auth integration. The client does not pretend a demo login
-has a token, redirect users automatically or retry failed writes.
+After login obtains a token set, call `portalSession.accept(data, startedAt)`
+from `@/lib/portal-api`. Access tokens stay in memory; refresh tokens persist in
+sessionStorage. The session manager owns refresh, logout and root route guards.
+The client replays authenticated requests once after HTTP 401; other errors do
+not automatically retry writes. Public auth requests bypass the refresh hook.
 
 ```tsx
 import { portalApi } from "@/lib/portal-api";
@@ -105,7 +104,7 @@ UI field names must explicitly map those names to backend keys.
 
 General feedback adds `Request ID: …` on 5xx when supplied by the response body
 or `X-Request-ID`. It adds localized wait guidance on 429 and parses `Retry-After`
-as seconds or an HTTP date. No request is automatically retried. Non-JSON proxy
+as seconds or an HTTP date. Rate-limited requests are not automatically retried. Non-JSON proxy
 errors retain the HTTP status and header request ID. Network failures use
 `client.network_error`; aborts propagate unchanged so cancellation is not shown
 as a failure. Local failures use the `client.*` code namespace.

@@ -2,9 +2,9 @@
 
 The standard development flow remains `npm ci` followed by `npm run dev` with
 Node.js 24. Docker and browser testing are optional workflows described below.
-The frontend currently uses fixtures, so local UI development needs no VPN,
-backend credentials or API environment variables. Live API checks need the
-backend network/VPN and approved configuration.
+Business modules currently use fixtures. Portal routes require a session; live
+authentication needs the backend network/VPN and approved API configuration.
+Isolated browser tests mock auth with synthetic tokens and need no credentials.
 
 Repository files do not configure GitLab project settings, runners, secrets,
 registry access or deployment targets automatically.

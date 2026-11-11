@@ -70,12 +70,15 @@ type ClientOptions = {
   getAccessToken: () => string | null | Promise<string | null>;
   getLanguage: () => ApiLanguage;
   fetch?: typeof fetch;
+  onUnauthorized?: (rejectedToken: string | null) => Promise<unknown>;
+  onAuthenticationFailure?: () => void;
+  getSessionGeneration?: () => number;
 };
 
 /** On the server, create one client per request; never share a user's token globally. */
 export function createApiClient(options: ClientOptions) {
   const base = apiBaseUrl(options.baseUrl);
-  async function request<T>(path: string, optionsForRequest: ApiRequestOptions = {}): Promise<ApiResponse<T>> {
+  async function send<T>(path: string, optionsForRequest: ApiRequestOptions = {}, retried = false): Promise<ApiResponse<T>> {
     // Resolve and validate before reading a token; never send credentials outside /v1.
     if (/^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(path) || path.includes("\\") || path.includes("#")) throw new Error("API paths must be relative to /v1.");
     const relative = path.replace(/^\//, "").replace(/^v1(?:\/|$)/, "");
@@ -85,15 +88,23 @@ export function createApiClient(options: ClientOptions) {
     const localError = (code: string, message: string, status = 0, requestId = "") =>
       new ApiError({ message, status: "error", status_code: status, error_code: code, request_id: requestId }, status, language);
     const { body, headers: customHeaders, auth = true, ...init } = optionsForRequest;
+    init.signal?.throwIfAborted();
+    const generation = options.getSessionGeneration?.();
     const headers = new Headers(customHeaders);
     headers.set("Accept", "application/json");
     headers.set("Accept-Language", language);
     headers.delete("Authorization");
+    let token: string | null = null;
     if (auth) {
-      const token = await options.getAccessToken();
+      token = await options.getAccessToken();
       if (!token) throw localError("client.auth_required", messages[language].auth);
       headers.set("Authorization", `Bearer ${token}`);
     }
+    init.signal?.throwIfAborted();
+    const checkSession = () => {
+      if (auth && generation !== options.getSessionGeneration?.()) throw localError("client.session_changed", messages[language].auth);
+    };
+    checkSession();
     let payload: BodyInit | undefined;
     if (body instanceof FormData) { payload = body; headers.delete("Content-Type"); }
     else if (body !== undefined) { payload = JSON.stringify(body); headers.set("Content-Type", "application/json"); }
@@ -109,6 +120,16 @@ export function createApiClient(options: ClientOptions) {
     } catch (error) {
       if (init.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
       throw localError("client.network_error", messages[language].network);
+    }
+    checkSession();
+    if (response.status === 401 && auth && options.onUnauthorized) {
+      if (!retried) {
+        await options.onUnauthorized(token);
+        init.signal?.throwIfAborted();
+        checkSession();
+        return send<T>(path, optionsForRequest, true);
+      }
+      options.onAuthenticationFailure?.();
     }
     if (!response.ok) {
       const valid = envelope(value);
@@ -130,6 +151,7 @@ export function createApiClient(options: ClientOptions) {
     }
     return value as ApiResponse<T>;
   }
+  function request<T>(path: string, init?: ApiRequestOptions) { return send<T>(path, init); }
   async function paginated<T>(path: string, init?: ApiRequestOptions): Promise<PaginatedResponse<T>> {
     const response = await request<T[]>(path, init) as PaginatedResponse<T>;
     const p = response.pagination;

@@ -62,7 +62,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Shared API transport
 
 - All pathology-portal-service HTTP calls must use `src/lib/portal-api.ts` in browser code, or a request-scoped `createApiClient` from `src/lib/api-client.ts` on the server. Do not add direct fetch/axios calls in pages or feature adapters. Existing fixtures stay local until real endpoint contracts are supplied.
-- Set `NEXT_PUBLIC_API_BASE_URL` before building; local is `http://localhost:8088`, dev/prod use the approved nginx subdomain. The client owns `/v1`. Auth supplies/clears the in-memory token with `setApiAccessToken`; never persist tokens in portal preferences. Only public endpoints explicitly use `auth: false`.
+- Set `NEXT_PUBLIC_API_BASE_URL` before building; local is `http://localhost:8088`, dev/prod use the approved nginx subdomain. The client owns `/v1`. Auth hands token sets to `portalSession.accept`; access tokens stay in memory and refresh tokens use `pathology:session:v1` sessionStorage (agreed with the user). Never persist tokens in portal preferences. Only public endpoints explicitly use `auth: false`. See `docs/session.md` for refresh/guard/race conventions and the backend's lack of access-token revocation.
 - Branch on `ApiError.errorCode`, never `message`. Render backend messages as text without translating again. Use `ApiFieldErrors` with `aria-invalid`/`aria-describedby` for canonical backend field names, and `ApiErrorNotice` for general feedback, 5xx request IDs and 429 guidance. See `docs/api-client.md` for usage and the pending backend CORS handoff.
 
 ## Request directory

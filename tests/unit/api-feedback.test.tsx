@@ -3,7 +3,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { ApiErrorNotice, ApiFieldErrors } from "@/components/api-feedback";
 import { ApiError, createApiClient } from "@/lib/api-client";
-import { portalApi, setApiAccessToken } from "@/lib/portal-api";
+import { portalApi, portalSession } from "@/lib/portal-api";
 import { savePortalPreferences } from "@/lib/portal-preference-store";
 
 it("renders validation from an HTTP response beneath its own form field as accessible text", async () => {
@@ -34,17 +34,17 @@ it("uses the portal preference store and current in-memory token in the shared b
   const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => Response.json({ message: "OK", status: "success", status_code: 200, data: [] }));
   vi.stubGlobal("fetch", fetcher);
   try {
-    setApiAccessToken("synthetic-one");
+    portalSession.accept({ access_token: "synthetic-one", refresh_token: "synthetic-refresh", token_type: "Bearer", expires_in: 300, refresh_expires_in: 1800, must_change_password: false });
     savePortalPreferences(JSON.stringify({ language: "th", fontSize: 100 }));
     await portalApi.request("users");
     savePortalPreferences(JSON.stringify({ language: "en", fontSize: 100 }));
-    setApiAccessToken("synthetic-two");
+    portalSession.accept({ access_token: "synthetic-two", refresh_token: "synthetic-refresh-two", token_type: "Bearer", expires_in: 300, refresh_expires_in: 1800, must_change_password: false });
     await portalApi.request("users");
     expect(new Headers(fetcher.mock.calls[0][1]?.headers).get("Accept-Language")).toBe("th");
     expect(new Headers(fetcher.mock.calls[1][1]?.headers).get("Accept-Language")).toBe("en");
     expect(new Headers(fetcher.mock.calls[1][1]?.headers).get("Authorization")).toBe("Bearer synthetic-two");
-    setApiAccessToken(null);
+    portalSession.clear();
     await expect(portalApi.request("users")).rejects.toMatchObject({ errorCode: "client.auth_required" });
     expect(fetcher).toHaveBeenCalledTimes(2);
-  } finally { setApiAccessToken(null); vi.unstubAllGlobals(); vi.unstubAllEnvs(); }
+  } finally { portalSession.clear(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); }
 });
