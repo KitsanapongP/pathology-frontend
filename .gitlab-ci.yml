@@ -2,8 +2,9 @@
 #   tag dev-v*  → test + audit → deploy dev อัตโนมัติ (docker บนเครื่อง dev)
 #   tag prod-v* → test + audit → กด deploy-prod เอง → runner ของ prod (tag pathology-prod) build + docker compose up -d บน prod เอง
 #   MR / ทุก branch → test + audit อย่างเดียว
-# web ยังไม่มี config ตอน runtime (NEXT_PUBLIC_* ฝังตอน build) จึงไม่มี .env บน server — ถ้าเพิ่มเมื่อไรให้ทำแบบ backend
-#   (.env อยู่บน server เท่านั้น, CI ตรวจว่ามีแต่ไม่เขียนทับ, แม่แบบ deploy/<env>.env.example)
+# .env (env ฝั่ง server, อ่านตอน runtime) อยู่บน server เท่านั้น: dev /opt/pathology/frontend/pathology-web/.env
+#   (CI ตรวจว่ามีแต่ไม่เขียนทับ, แม่แบบ deploy/dev.env.example) — prod ยังไม่ใช้ .env
+#   NEXT_PUBLIC_* ใน .env นี้ CI อ่านแล้วส่งเป็น --build-arg ตอน docker build (ถูกฝังลง JS) — แก้ค่าแล้วต้อง push tag ใหม่ให้ build ใหม่
 # ไม่มี CI/CD variable ที่ต้องตั้ง
 
 default:
@@ -100,7 +101,14 @@ e2e:
   image: docker:29-cli
   before_script:
     - export IMAGE="$SERVICE:$CI_COMMIT_TAG"
-    - docker build -t "$IMAGE" -f Dockerfile .
+    # NEXT_PUBLIC_* ฝังตอน build — อ่านจาก .env บน server (ENV_FILE) ถ้า job ตั้งไว้ (prod ยังไม่ใช้ → ใช้ค่า default ใน Dockerfile)
+    - |
+      if [ -n "$ENV_FILE" ]; then
+        test -f "$ENV_FILE" || { echo "ไม่มี $ENV_FILE — สร้างจาก deploy/dev.env.example ก่อน"; exit 1; }
+        set -a; . "$ENV_FILE"; set +a
+      fi
+    # --build-arg ไม่ใส่ค่า = เอาจาก env ของ shell (ไม่ได้ตั้ง = ใช้ default ของ Dockerfile)
+    - docker build --build-arg NEXT_PUBLIC_API_BASE_URL --build-arg NEXT_PUBLIC_AUTH_MODE -t "$IMAGE" -f Dockerfile .
 
 deploy-dev:
   extends: .docker_build
@@ -111,10 +119,14 @@ deploy-dev:
   variables:
     # runner mount /opt/pathology/dev/apps ที่ path เดียวกับ host (../infra document/deploy/dev/03-gitlab-runner.md)
     APP_DIR: /opt/pathology/dev/apps/pathology-web
+    # .env ของ frontend อยู่ใต้ /opt/pathology/frontend/<repo> — runner ต้อง mount โฟลเดอร์นี้แบบอ่านอย่างเดียว
+    # (../infra document/deploy/dev/03-gitlab-runner.md)
+    ENV_FILE: /opt/pathology/frontend/pathology-web/.env
   script:
+    # .env อยู่บน server เท่านั้น — สร้างเองครั้งแรกจาก deploy/dev.env.example, CI ไม่เขียนทับ (ตรวจว่ามีไฟล์แล้วใน .docker_build)
     - mkdir -p "$APP_DIR"
     - cp deploy/compose.yml "$APP_DIR/compose.yml"
-    - cd "$APP_DIR" && IMAGE_TAG="$CI_COMMIT_TAG" DEPLOY_ENV=dev docker compose up -d
+    - cd "$APP_DIR" && IMAGE_TAG="$CI_COMMIT_TAG" DEPLOY_ENV=dev ENV_FILE="$ENV_FILE" docker compose up -d
     - docker image prune -f
 
 # runner ของ prod mount /opt/pathology/prod/apps ที่ path เดียวกับ host (../infra document/deploy/prod/03-gitlab-runner.md)
