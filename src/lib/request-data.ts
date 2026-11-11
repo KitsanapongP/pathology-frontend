@@ -2,6 +2,7 @@ import { mockPatientName } from "./mock-patient";
 import { ocrExample } from "./ocr-examples";
 import { examinationOptions } from "./ocr-result";
 import type { OcrResult, PathologyFields } from "./ocr-result";
+import { demo0038Fields } from "./request-demo-0038";
 
 export type OcrStatus = "สแกนแล้ว" | "กำลังดำเนินงาน" | "ไม่สามารถสแกนได้" | "รอประมวลผล";
 export type ReviewStatus = "รอตรวจสอบ" | "พร้อมใช้งาน" | "ต้องแก้ไข" | "รอผล OCR";
@@ -21,6 +22,7 @@ export type RequestRecord = {
   file?: File;
   ocrResult?: OcrResult;
   pathology?: PathologyFields;
+  isMock?: boolean;
 };
 
 // Local fixtures until the requests API is connected.
@@ -33,6 +35,7 @@ export function initialRequests(): RequestRecord[] {
     const review: ReviewStatus = [0, 7, 14, 20, 24].includes(i) ? "รอตรวจสอบ" : i === 2 || ocr === "ไม่สามารถสแกนได้" ? "ต้องแก้ไข" : ocr === "สแกนแล้ว" ? "พร้อมใช้งาน" : "รอผล OCR";
     return {
       id: `REQ-2569-${number}`,
+      isMock: true,
       category: categories[i % categories.length],
       sender: senders[i % senders.length],
       fileName: `request-${number}.pdf`,
@@ -53,6 +56,8 @@ export function initialRequests(): RequestRecord[] {
           category: "ส่งตรวจ", sender: "เจ้าหน้าที่รับคำร้อง", uploadedAt: "2026-10-24T08:55:00+07:00",
           ocr: "สแกนแล้ว" as const, review: "รอตรวจสอบ" as const, ocrResult: example.result, pathology: { ...example.fieldDraft, ward: ["OPD", "Ward A", "Ward B"][i % 3], tests: [["Cell block", "Routine histology", "Frozen section", "Kidney biopsy"][i]], operations: ["Core biopsy"], collector: "เจ้าหน้าที่สมมติ", specimenCount: String(i + 1) } };
       })() : {}),
+      ...(number === "0038" ? { category: "ส่งตรวจ", pathology: demo0038Fields,
+        receivedAt: "2026-11-06T09:45:00+07:00", uploadedAt: "2026-11-06T09:48:00+07:00" } : {}),
     };
   });
 }

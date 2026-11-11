@@ -2,9 +2,11 @@
 
 The standard development flow remains `npm ci` followed by `npm run dev` with
 Node.js 24. Docker and browser testing are optional workflows described below.
-The frontend currently uses fixtures, so local UI development needs no VPN,
-backend credentials or API environment variables. Live API checks need the
-backend network/VPN and approved configuration.
+Business modules currently use fixtures. The user-requested temporary demo mode
+adds small Student / Professor and Admin skip shortcuts beside the real login form.
+Set `NEXT_PUBLIC_AUTH_MODE=demo` in `.env.local` (the example enables it), or `api`
+to hide the shortcuts. Real login needs backend/VPN and approved API configuration.
+Isolated browser tests mock auth with synthetic tokens and need no credentials.
 
 Repository files do not configure GitLab project settings, runners, secrets,
 registry access or deployment targets automatically.
@@ -23,9 +25,9 @@ npm run check
 tests. `check` additionally runs lint, TypeScript and a normal production build.
 `npm run test:watch` is the optional interactive development mode.
 
-Unit examples cover identifier scoping, multiple search terms and receipt dates
-crossing midnight in Asia/Bangkok. The component example checks password visibility
-without submitting credentials. These do not prove real authentication.
+Unit examples cover identifier scoping, receipt dates in Asia/Bangkok, HTTP
+errors, session expiry/rotation and login/password form validation. Auth tests use
+synthetic tokens with mocked network responses; they do not prove live authentication.
 
 Install Chromium once, then run the browser suite:
 
@@ -33,6 +35,10 @@ Install Chromium once, then run the browser suite:
 npx --no-install playwright install chromium
 npm run test:e2e
 ```
+
+The normal E2E command forces API authentication mode with mocked responses.
+Run `npm run test:e2e:demo` separately to verify the role preview; do not run both
+commands concurrently because both own loopback port 3100.
 
 If the tests fail immediately with `browserType.launch: Executable doesn't exist`,
 the browser binary is unavailable; no UI assertions have run yet. `npm ci`
@@ -48,7 +54,8 @@ npm run test:e2e
 
 Do not delete all browser caches or reinstall project dependencies for this error.
 
-The E2E command builds production and starts its own server on loopback port 3100.
+The E2E command builds production with an intercepted synthetic API origin
+(`http://api.e2e.test`) and starts its own server on loopback port 3100.
 Stop any other process on that port before running; it deliberately refuses to
 reuse an unknown server. Each test has an isolated browser context. It does not
 touch the user's existing drafts, microphone or clinical confirmation workflow.
@@ -103,12 +110,34 @@ and is reached through the infra nginx at `app.<NGINX_DOMAIN>` (`UPSTREAM_WEB`).
 The app has no runtime `.env` yet; `NEXT_PUBLIC_*` values are fixed at build time.
 Run the configuration through GitLab's CI Lint before pushing a tag.
 
+For a source update to GitLab `dev`, fetch that branch first, merge the reviewed
+frontend work on top of it, preserve the group's CI/deploy files, and push only
+the `dev` branch without force or tags. A branch push runs checks; it does not
+deploy. The request-identifier browser regression also needs the shared synthetic
+auth fixture now that portal routes are guarded. Never upload ignored local env
+files or the private dev IP. Before a later tag deployment, the maintainer must
+provide the approved `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_AUTH_MODE` as
+Docker build arguments; the existing deployment job currently passes neither,
+and standalone Docker defaults to API mode with no API URL. No deployment tag
+should be created merely to upload source for review.
+
+Local validation for the frontend/dev integration on 2026-11-11 passed:
+`npm run check` (25 Node tests, 65 Vitest tests, lint, TypeScript and build),
+16 API-mode Chromium tests, seven shortcut-preview Chromium tests, and the
+production dependency audit (zero reported vulnerabilities). GitLab's existing
+CI/deploy files were preserved byte-for-byte; runner/pipeline results must be
+checked on GitLab after publication.
+
 Audit fails for high/critical production dependency findings. Triage findings;
 do not run `npm audit fix --force` automatically. Development dependencies should
 also be reviewed with `npm audit` before upgrades. This is dependency scanning,
 not a complete security assessment. No registry credentials are needed yet.
 
 ## 4. API and Postman
+
+The shared HTTP client is documented in `docs/api-client.md`, including env/build
+configuration, auth/language headers, field validation and the backend CORS
+handoff. Fixtures remain local until actual endpoint contracts are integrated.
 
 See `postman/README.md`. Health checks use the supplied base-URL handoff; the dev
 IP may be configured in a Git-ignored `postman/dev.local.json`; this file is not
@@ -126,9 +155,10 @@ development dependency chain. npm's suggested force fix downgrades
 
 ## 5. Security work before real data
 
-- Current login is a demo role selector. Implement server-verified identity and
-  per-record/tenant authorization before connecting real records. Hiding a button
-  does not enforce access.
+- Login, refresh, logout and mandatory password change use the supplied auth API
+  contract. Verify them against the real backend/CORS/Keycloak deployment before
+  connecting real records. Per-record, role and tenant authorization remain
+  backend responsibilities; frontend guards do not enforce API permissions.
 - Use only synthetic data in fixtures, screenshots, traces, Postman and CI logs.
   Playwright traces may contain DOM/network details. CI failure artifacts expire
   after three days; confirm this with organizational retention policy.

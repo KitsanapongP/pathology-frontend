@@ -1,7 +1,7 @@
 "use client";
 import { PortalText, usePortalLanguage } from './portal-preferences';
 
-import Link from "next/link";
+import LogoutButton from "./logout-button";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import PortalIcon, { type PortalIconName } from "./portal-icon";
 
@@ -121,7 +121,7 @@ export default function PortalDashboard() {
         </div>
         <div className="h-9 w-px bg-[#dce4ee]" />
         <div className="relative"><button onClick={() => { setAccountMenu(!accountMenu); setNotifications(false); }} aria-expanded={accountMenu} className="flex items-center gap-3 rounded-lg py-2 text-left focus-visible:outline-2 focus-visible:outline-blue-600"><span className="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-[#e7edf5] bg-[#e2eaf4] text-xs font-bold text-[#2b507d]">AD</span><span className="hidden sm:block"><span className="block text-sm font-semibold text-[#17315a]">Admin</span><span className="mt-0.5 block text-xs text-[#7c8ba4]"><PortalText>ผู้ดูแลระบบ</PortalText></span></span><PortalIcon name="chevron" className="size-3.5 rotate-90" /></button>
-          {accountMenu && <div className="portal-dropdown right-0 w-52"><p className="border-b border-[#edf1f7] px-4 py-3 text-xs text-[#7f8da3]">Admin</p><button onClick={() => { setAccountMenu(false); showSettings(); }} className="flex w-full items-center gap-2 px-4 py-3 text-sm hover:bg-blue-50"><PortalIcon name="settings" className="size-4" /><PortalText>ตั้งค่าระบบ</PortalText></button><Link href="/" className="flex items-center gap-2 px-4 py-3 text-sm hover:bg-blue-50"><PortalIcon name="logout" className="size-4" /><PortalText>ออกจากระบบ</PortalText></Link></div>}
+          {accountMenu && <div className="portal-dropdown right-0 w-52"><p className="border-b border-[#edf1f7] px-4 py-3 text-xs text-[#7f8da3]">Admin</p><button onClick={() => { setAccountMenu(false); showSettings(); }} className="flex w-full items-center gap-2 px-4 py-3 text-sm hover:bg-blue-50"><PortalIcon name="settings" className="size-4" /><PortalText>ตั้งค่าระบบ</PortalText></button><LogoutButton className="flex items-center gap-2 px-4 py-3 text-sm hover:bg-blue-50" /></div>}
         </div>
       </div>
     </header>

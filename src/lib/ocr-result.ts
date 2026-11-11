@@ -25,6 +25,7 @@ export const pathologyFields = [
   ['collectedAt', 'วันที่เก็บสิ่งส่งตรวจ'], ['collectedTime', 'เวลา'],
   ['additionalNumber', 'ย้อมเพิ่มเติม · เลขที่'], ['additionalTestName', 'ชื่อรายการตรวจ'],
   ['procedure', 'Operation · อื่น ๆ (ระบุ)'], ['clinicalHistory', 'Clinical Information'],
+  ['referralNote', 'ข้อความจากแพทย์ผู้ส่งตรวจ'],
   ['radiographicFindings', 'Radiographic finding'], ['clinicalDiagnosis', 'Clinical diagnosis'],
   ['specimen', 'รายละเอียดสิ่งส่งตรวจ'], ['specimenSite', 'ข้าง / ตำแหน่ง / อวัยวะ'],
   ['specimenCount', 'จำนวนสิ่งส่งตรวจรวม (ถุง/ขวด)'], ['nextAppointment', 'วัน เวลานัดผู้ป่วยครั้งต่อไป'],

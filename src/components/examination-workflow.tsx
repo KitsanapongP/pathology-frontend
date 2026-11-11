@@ -1,6 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import ExaminationCaseContext from "./examination-case-context";
+import { useRouter } from "next/navigation";
+import ExaminationSpecimenTemplate from "./examination-specimen-template";
+import ExaminationCaptureStatus from "./examination-capture-status";
+import PortalFontControl from "./portal-font-control";
 import { useEffect, useRef, useState } from "react";
 import PortalIcon, { type PortalIconName } from "./portal-icon";
 import ExaminationPedal from "./examination-pedal";
@@ -8,9 +12,9 @@ import ExaminationFootKey from "./examination-foot-key";
 import ExaminationMicStatus from "./examination-mic-status";
 import ExaminationDevTools from "./examination-dev-tools";
 import ExaminationPedalButton from "./examination-pedal-button";
-import { blankParts, examinationRequests, recordingBlockReason, readyForRecording, shortTime, type ExaminationPart, type ExaminationRequest } from "@/lib/examination-data";
+import { blankParts, examinationRequests, recordingBlockReason, readyForRecording, shortTime, visibleExaminationParts, unlockedExaminationParts, populatedExaminationParts, mayCompleteExaminationPart, completedPartsAfterEdit, maySubmitExamination, type ExaminationPart, type ExaminationRequest } from "@/lib/examination-data";
 import { normalizeSpokenDigits, pedalTiming, voiceInstructions, type PedalAction, type ExaminationScreen, type ExaminationPanel } from "@/lib/examination-controls";
-import { readExaminationDraft, writeExaminationDraft, type ExaminationClip, type ExaminationDraft } from "@/lib/examination-drafts";
+import { readExaminationDraft, writeExaminationDraft, resetExaminationTestDraft, type ExaminationClip, type ExaminationDraft } from "@/lib/examination-drafts";
 import { useExaminationPedals } from "@/hooks/use-examination-pedals";
 import { useExaminationVoice } from "@/hooks/use-examination-voice";
 import { useExaminationFocus, type FootTarget } from "@/hooks/use-examination-focus";
@@ -19,6 +23,7 @@ const requests = examinationRequests();
 type Notice = { text: string; tone: "error" | "success" | "info"; retry?: "save" | "playback" };
 
 export default function ExaminationWorkflow() {
+  const router = useRouter();
   const [screen, setScreen] = useState<ExaminationScreen>("standby");
   const [query, setQuery] = useState("");
   const [matches, setMatches] = useState<ExaminationRequest[]>([]);
@@ -26,6 +31,8 @@ export default function ExaminationWorkflow() {
   const [selected, setSelected] = useState<ExaminationRequest | null>(null);
   const [parts, setParts] = useState(blankParts);
   const [partId, setPartId] = useState("A");
+  const [enabledPartIds, setEnabledPartIds] = useState<string[]>([]);
+  const [completedPartIds, setCompletedPartIds] = useState<string[]>([]);
   const [clips, setClips] = useState<ExaminationClip[]>([]);
   const [clipId, setClipId] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -66,12 +73,17 @@ export default function ExaminationWorkflow() {
   const linesOrigin = useRef<"tools" | null>(null);
   const stage = screen === "record" ? 2 : screen === "review" || screen === "complete" ? 3 : 1;
   const part = parts.find(item => item.id === partId) ?? parts[0];
+  const audioPartIds = clips.map(clip => clip.partId);
+  const visibleParts = visibleExaminationParts(parts, audioPartIds, unlockedExaminationParts(parts, completedPartIds, confirmed));
+  const reportParts = populatedExaminationParts(parts, audioPartIds);
+  const canCompletePart = mayCompleteExaminationPart(parts, audioPartIds, completedPartIds, partId);
+  const canSubmit = maySubmitExamination(parts, audioPartIds, completedPartIds);
   const totalSeconds = clips.reduce((sum, item) => sum + item.seconds, 0);
   const activeClip = clips.find(item => item.id === clipId) ?? clips.filter(item => item.partId === partId).at(-1) ?? clips.at(-1);
   const lineCount = parts.reduce((sum, item) => sum + item.lines.length, 0);
   const context = help ? "help" : confirmOpen ? "confirm" : panel ?? screen;
   const focus = useExaminationFocus({ context, ready: !loading, root: () => help ? helpDialog.current : confirmOpen ? modal.current : panel ? panelDialog.current : rail.current,
-    onPartAdjustmentStep: direction => { const index = parts.findIndex(item => item.id === partId); changePart(parts[Math.max(0, Math.min(parts.length - 1, index + direction))].id); },
+    onPartAdjustmentStep: direction => { const index = visibleParts.findIndex(item => item.id === partId); changePart(visibleParts[Math.max(0, Math.min(visibleParts.length - 1, index + direction))].id); },
   });
   const voice = useExaminationVoice({
     command: text => { setSpeechPreviewText(text); executeCommand(text); },
@@ -82,17 +94,19 @@ export default function ExaminationWorkflow() {
       else search(text);
     },
     field: text => { setSpeechPreviewText(text); applyFieldSpeech(text); },
-    clip: clip => { if (!confirmed) { setClips(current => [...current, clip]); setClipId(clip.id); setSaveStatus("idle"); } }, notice: text => setNotice(text),
+    clip: clip => { if (!confirmed) { setClips(current => [...current, clip]); setCompletedPartIds(current => current.filter(id => id !== clip.partId)); setClipId(clip.id); setSaveStatus("idle"); } }, notice: text => setNotice(text),
   }, context);
   const busy = Boolean(voice.mode);
   const commandCapture = commandArmed || (busy && voice.destination === "command");
   const voiceLabel = focus.target.field === "line" ? "แก้บรรทัดที่เลือก" : focus.target.field === "entry" ? "เพิ่มข้อความ" : context === "standby" || context === "case" ? "พูดเลขคำร้อง" : context === "record" && !commandCapture ? "บอกผลตรวจ" : "พูดคำสั่ง";
   const partAdjusting = focus.target.adjusting && !panel && !help && !confirmOpen;
-  const presentation = { partAdjusting, voiceLabel, confirmFocused: focus.target.confirm, adjusting: focus.target.adjusting };
+  const presentation = { partAdjusting, voiceLabel, confirmFocused: focus.target.confirm, completePartFocused: focus.target.completePart, adjusting: focus.target.adjusting };
   const pedals = useExaminationPedals({
     context,
     enabled: !busy && !loading,
     confirmFocused: focus.target.confirm,
+    completePartFocused: focus.target.completePart,
+    gestureScope: `${selected?.id ?? ""}:${partId}`,
     partAdjusting,
     start: action => {
       if (loading || busy) return;
@@ -153,11 +167,11 @@ export default function ExaminationWorkflow() {
   useEffect(() => { if (confirmOpen) modal.current?.showModal(); else modal.current?.close(); }, [confirmOpen]);
   useEffect(() => { if (help) helpDialog.current?.showModal(); else helpDialog.current?.close(); }, [help]);
   useEffect(() => { const dialog = panelDialog.current; if (panel && dialog && !dialog.open) dialog.showModal(); else if (!panel) dialog?.close(); }, [panel]);
-  useEffect(() => { saveRevision.current += 1; }, [selected, parts, clips, confirmed]);
+  useEffect(() => { saveRevision.current += 1; }, [selected, parts, clips, confirmed, enabledPartIds, completedPartIds]);
   useEffect(() => {
     const revision = saveRevision.current;
     if (!selected || !hydrated.current || loading) return;
-    const draft: ExaminationDraft = { version: 2, requestId: selected.id, parts, clips, confirmed, savedAt: new Date().toISOString() };
+    const draft: ExaminationDraft = { version: 2, requestId: selected.id, parts, clips, confirmed, savedAt: new Date().toISOString(), visiblePartIds: enabledPartIds, completedPartIds };
     const isCurrent = () => currentRequest.current === draft.requestId && saveRevision.current === revision;
     autosaveTimer.current = window.setTimeout(() => {
       if (!isCurrent()) return;
@@ -167,17 +181,17 @@ export default function ExaminationWorkflow() {
     }, 600);
     return () => { if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current); };
 
-  }, [selected, parts, clips, confirmed, loading]);
+  }, [selected, parts, clips, confirmed, loading, enabledPartIds, completedPartIds]);
   useEffect(() => {
     const protect = (event: BeforeUnloadEvent) => { if (selected && (busy || (saveStatus !== "saved" && (lineCount || clips.length)))) event.preventDefault(); };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
   }, [saveStatus, selected, lineCount, clips.length, busy]);
 
-  async function save(final = confirmed, announce = false) {
+  async function save(final = confirmed, announce = false, progress: Pick<ExaminationDraft, "completedPartIds" | "visiblePartIds"> = {}) {
     if (!selected) return true;
     if (!hydrated.current) { setNotice("ยังอ่านฉบับร่างเดิมไม่ได้ กรุณาลองเปิดเคสใหม่ก่อนบันทึก"); return false; }
-    const draft: ExaminationDraft = { version: 2, requestId: selected.id, parts, clips, confirmed: final, savedAt: new Date().toISOString() };
+    const draft: ExaminationDraft = { version: 2, requestId: selected.id, parts, clips, confirmed: final, savedAt: new Date().toISOString(), visiblePartIds: enabledPartIds, completedPartIds, ...progress };
     if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current);
     const revision = saveRevision.current;
     const isCurrent = () => currentRequest.current === draft.requestId && saveRevision.current === revision;
@@ -188,7 +202,7 @@ export default function ExaminationWorkflow() {
       if (isCurrent()) { setSaveStatus("saved"); if (announce) setNotice("เก็บฉบับร่างในเครื่องแล้ว", "success"); else updateNotice(current => current?.retry === "save" ? null : current); }
       return true;
     } catch {
-      if (isCurrent()) { setSaveStatus("error"); setNotice(final && !confirmed ? "ยืนยันในเครื่องไม่สำเร็จ กรุณาค้างกลางแล้วปล่อยเพื่อลองยืนยันอีกครั้ง" : "บันทึกไม่สำเร็จ กรุณาลองใหม่ก่อนออกจากเคส", "error", final && !confirmed ? undefined : "save"); }
+      if (isCurrent()) { setSaveStatus("error"); setNotice(final && !confirmed ? "ยืนยันในเครื่องไม่สำเร็จ กรุณาค้างขวาแล้วปล่อยเพื่อลองยืนยันอีกครั้ง" : "บันทึกไม่สำเร็จ กรุณาลองใหม่ก่อนออกจากเคส", "error", final && !confirmed ? undefined : "save"); }
       return false;
     }
   }
@@ -197,11 +211,14 @@ export default function ExaminationWorkflow() {
     if (selected && hydrated.current && !(await save())) return;
     setPanel(null); hydrated.current = false; setLoading(true); setNotice(""); setDraftRestored(false); setDraftReadFailed(false);
     currentRequest.current = record.id; saveRevision.current += 1;
-    setCommandArmed(false); setClipId(""); setPlayTime(0); setNewLineIds([]); setSelected(record); setParts(blankParts()); setClips([]); setConfirmed(false); setPast([]); setFuture([]); setPartId("A"); setSaveStatus("idle"); setScreen("case");
+    setCommandArmed(false); setClipId(""); setPlayTime(0); setNewLineIds([]); setSelected(record); setParts(blankParts()); setClips([]); setConfirmed(false); setPast([]); setFuture([]); setPartId("A"); setEnabledPartIds([]); setSaveStatus("idle"); setScreen("case");
+    setCompletedPartIds([]);
     try {
       const draft = await readExaminationDraft(record.id);
       if (draft?.version === 2 && draft.requestId === record.id) {
         setParts(draft.parts); setClips(draft.clips); setConfirmed(draft.confirmed);
+        setEnabledPartIds(draft.visiblePartIds ?? []);
+        setCompletedPartIds(draft.completedPartIds ?? (draft.confirmed ? populatedExaminationParts(draft.parts, draft.clips.map(clip => clip.partId)).map(part => part.id) : []));
         setDraftRestored(draft.parts.some(item => item.lines.length > 0) || draft.clips.length > 0);
       } else {
         const legacy = JSON.parse(sessionStorage.getItem(`pathology:exam:${record.id}`) ?? "null");
@@ -225,6 +242,7 @@ export default function ExaminationWorkflow() {
   }
   function updateParts(nextParts: ExaminationPart[]) {
     if (confirmed || confirmOpen) return;
+    setCompletedPartIds(current => completedPartsAfterEdit(parts, nextParts, current));
     setPast(current => [...current.slice(-49), parts]); setFuture([]); setParts(nextParts); setSaveStatus("idle");
   }
   function addText(value: string, target = partId) {
@@ -242,15 +260,19 @@ export default function ExaminationWorkflow() {
   function undo() {
     if (confirmed || busy || confirmOpen) return;
     const previous = past.at(-1);
-    if (previous) { setFuture(current => [parts, ...current]); setParts(previous); setPast(current => current.slice(0, -1)); setSaveStatus("idle"); }
+    if (previous) { setCompletedPartIds(current => completedPartsAfterEdit(parts, previous, current)); setFuture(current => [parts, ...current]); setParts(previous); setPast(current => current.slice(0, -1)); setSaveStatus("idle"); }
   }
   function redo() {
     if (confirmed || busy || confirmOpen) return;
     const nextParts = future[0];
-    if (nextParts) { setPast(current => [...current, parts]); setParts(nextParts); setFuture(current => current.slice(1)); setSaveStatus("idle"); }
+    if (nextParts) { setCompletedPartIds(current => completedPartsAfterEdit(parts, nextParts, current)); setPast(current => [...current, parts]); setParts(nextParts); setFuture(current => current.slice(1)); setSaveStatus("idle"); }
   }
   function changePart(id: string) {
     if (busy || confirmOpen) { setNotice("ปล่อยแป้นเหยียบและรอประมวลผลก่อนเปลี่ยนหัวข้อ"); return; }
+    if (!parts.some(item => item.id === id)) return;
+    if (!visibleParts.some(item => item.id === id)) {
+      setNotice("บันทึก Part ปัจจุบันให้เสร็จก่อนเปิด Part ถัดไป"); return;
+    }
     setPartId(id); setEntry("");
     const preferred = clips.filter(item => item.partId === id).at(-1) ?? clips.at(-1);
     if (preferred?.id === activeClip?.id && audio.current) audio.current.currentTime = 0;
@@ -261,6 +283,19 @@ export default function ExaminationWorkflow() {
       const section = container?.querySelector<HTMLElement>(`[data-report-part="${id}"]`);
       if (container && section) container.scrollTo({ top: section.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop, behavior: "smooth" });
     });
+  }
+  async function completeCurrentPart() {
+    if (busy || loading || confirmed || confirmOpen || !canCompletePart || !focus.getTarget().completePart) return;
+    const completed = [...completedPartIds, partId];
+    const unlocked = unlockedExaminationParts(parts, completed);
+    setCommandArmed(false); setLoading(true); audio.current?.pause();
+    if (await save(false, false, { completedPartIds: completed, visiblePartIds: unlocked })) {
+      setCompletedPartIds(completed); setEnabledPartIds(unlocked);
+      const nextPart = parts[parts.findIndex(item => item.id === partId) + 1];
+      if (screen === "record" && nextPart && unlocked.includes(nextPart.id)) { setPartId(nextPart.id); setEntry(""); setClipId(""); setPlayTime(0); }
+      setNotice("");
+    }
+    setLoading(false);
   }
   async function next() {
     if (busy || loading || help || panel) return;
@@ -273,11 +308,12 @@ export default function ExaminationWorkflow() {
       setScreen(confirmed ? "review" : "record"); return;
     }
     if (screen === "record") {
-      if (!lineCount && !clips.length) { setNotice("บันทึกเสียงหรือเพิ่มข้อความก่อนตรวจสอบผล"); return; }
+      if (!canSubmit) { setNotice("กดค้างเพื่อบันทึกแต่ละ Part ให้เสร็จก่อนตรวจสอบผล"); return; }
       if (await save()) { audio.current?.pause(); setScreen("review"); } return;
     }
     if (screen === "review") {
       if (confirmed) { await reset(); return; }
+      if (!canSubmit) { setNotice("บันทึก Part ที่แก้ไขให้เสร็จก่อนส่งผล"); return; }
       if (!lineCount || parts.some(item => item.lines.some(line => !line.text.trim()))) { setNotice("ต้องมีข้อความผลตรวจ และไม่มีบรรทัดว่าง ก่อนยืนยัน"); return; }
       audio.current?.pause(); setConfirmOpen(true); return;
     }
@@ -295,13 +331,35 @@ export default function ExaminationWorkflow() {
     if (screen === "record") { if (await save()) setScreen("case"); return; }
     if (screen === "case" || screen === "complete" || screen === "standby") await reset();
   }
+  async function goHome() {
+    if (busy || loading) return;
+    audio.current?.pause(); setCommandArmed(false); setLoading(true);
+    if (selected && hydrated.current && saveStatus !== "saved" && !(await save())) { setLoading(false); return; }
+    router.push("/portal");
+  }
   async function reset() {
     if (busy || loading || (hydrated.current && !(await save()))) return;
     hydrated.current = false; currentRequest.current = null; saveRevision.current += 1;
-    setCommandArmed(false); setClipId(""); setPlayTime(0); setNewLineIds([]); setSelected(null); setParts(blankParts()); setClips([]); setConfirmed(false); setQuery(""); setMatches([]); setSearched(false); setScreen("standby"); setNotice(""); setSaveStatus("idle"); setPanel(null); setEntry(""); setPast([]); setFuture([]); setDraftRestored(false); setDraftReadFailed(false);
+    setCommandArmed(false); setClipId(""); setPlayTime(0); setNewLineIds([]); setSelected(null); setParts(blankParts()); setClips([]); setConfirmed(false); setQuery(""); setMatches([]); setSearched(false); setScreen("standby"); setNotice(""); setSaveStatus("idle"); setPanel(null); setEntry(""); setPast([]); setFuture([]); setDraftRestored(false); setDraftReadFailed(false); setEnabledPartIds([]);
+    setCompletedPartIds([]);
+  }
+  async function resetTestCase(restore: boolean) {
+    if (process.env.NODE_ENV !== "development" || !selected || busy || loading) return;
+    const record = selected;
+    const wasHydrated = hydrated.current;
+    setLoading(true); hydrated.current = false; saveRevision.current += 1;
+    if (autosaveTimer.current !== null) window.clearTimeout(autosaveTimer.current);
+    try {
+      await saveQueue.current.catch(() => {});
+      await resetExaminationTestDraft(record.id, restore);
+      await choose(record);
+    } catch {
+      hydrated.current = wasHydrated; setLoading(false);
+      setNotice(restore ? "คืนงานไม่ได้ ยังไม่มีสำเนาก่อนรีเซ็ต หรือเปิดข้อมูลในเครื่องไม่สำเร็จ" : "รีเซ็ตไม่สำเร็จ ข้อมูลเดิมยังอยู่ กรุณาลองใหม่");
+    }
   }
   async function confirmResult() {
-    if (!confirmOpen || busy || loading || !lineCount || confirmed) return;
+    if (!confirmOpen || busy || loading || !lineCount || confirmed || !canSubmit || !focus.getTarget().confirm) return;
     setLoading(true);
     if (await save(true)) { setConfirmed(true); setConfirmOpen(false); setScreen("review"); setNotice(""); }
     setLoading(false);
@@ -309,6 +367,7 @@ export default function ExaminationWorkflow() {
   function performPedalAction(action: PedalAction) {
     if (action === "back") { void back(); return; }
     if (loading || busy) return;
+    if (action === "completePart") { void completeCurrentPart(); return; }
     if (action === "previousControl") { setCommandArmed(false); focus.move(-1); return; }
     if (action === "nextControl") { setCommandArmed(false); focus.move(1); return; }
     if (action === "activate") { setCommandArmed(false); focus.activate(); return; }
@@ -338,7 +397,7 @@ export default function ExaminationWorkflow() {
     if (screen !== "record" && screen !== "review") { setNotice("ไม่พบคำสั่งนี้ กลางค้างแล้วพูดเลขคำร้อง หรือเปิดคู่มือคำสั่ง"); return; }
     const target = value.match(/^(?:ไป\s*)?(?:part|พาร์ท|พาร์ต|พาท|พาร์)\s*([a-e]|เอ|บี|ซี|ดี|อี)$/i);
     if (target) { const names: Record<string, string> = { เอ: "A", บี: "B", ซี: "C", ดี: "D", อี: "E" }; changePart(names[target[1]] ?? target[1].toUpperCase()); return; }
-    if (/^หัวข้อ(ถัดไป|ก่อนหน้า)$/.test(value)) { const index = parts.findIndex(item => item.id === partId); changePart(parts[Math.max(0, Math.min(parts.length - 1, index + (value.includes("ถัดไป") ? 1 : -1)))].id); return; }
+    if (/^หัวข้อ(ถัดไป|ก่อนหน้า)$/.test(value)) { const index = visibleParts.findIndex(item => item.id === partId); changePart(visibleParts[Math.max(0, Math.min(visibleParts.length - 1, index + (value.includes("ถัดไป") ? 1 : -1)))].id); return; }
     if (value === "บันทึกฉบับร่าง") { void save(confirmed, true); return; }
     if (value === "ย้อนการแก้ไข") { undo(); return; }
     if (value === "ทำซ้ำ") { redo(); return; }
@@ -406,8 +465,8 @@ export default function ExaminationWorkflow() {
     { id: "help", label: "คู่มือ", icon: "file" },
   ] : screen === "record" ? [
     { id: "parts", label: `Part ${partId}`, icon: "folder", initial: true },
-    { id: "latest", label: "แก้ล่าสุด", icon: "edit", disabled: !part.lines.length },
-    { id: "review", label: "ตรวจสอบผล", icon: "checkCircle", disabled: !lineCount && !clips.length },
+    { id: "completePart", label: `บันทึก Part ${partId}`, icon: "checkCircle", disabled: !canCompletePart },
+    { id: "review", label: "ตรวจสอบและส่งผล", icon: "checkCircle", disabled: !canSubmit },
     { id: "tools", label: "เครื่องมือ", icon: "menu" },
   ] : screen === "review" && confirmed ? [
     { id: "parts", label: `Part ${partId}`, icon: "folder" },
@@ -416,7 +475,7 @@ export default function ExaminationWorkflow() {
   ] : screen === "review" ? [
     { id: "parts", label: `Part ${partId}`, icon: "folder" },
     { id: "edit", label: "แก้ข้อความ", icon: "edit", disabled: confirmed || !part.lines.length },
-    { id: "confirm", label: primaryLabel, icon: "checkCircle", initial: true, disabled: !lineCount },
+    canCompletePart ? { id: "completePart", label: `บันทึก Part ${partId}`, icon: "checkCircle", initial: true } : { id: "confirm", label: "ส่งผล", icon: "checkCircle", initial: true, disabled: !lineCount || !canSubmit },
     { id: "tools", label: "เครื่องมือ", icon: "menu" },
   ] : [
     { id: "view", label: "เปิดผลตรวจ", icon: "file" },
@@ -442,13 +501,13 @@ export default function ExaminationWorkflow() {
   const choice = (label: string, icon: PortalIconName, run: () => void, initial = false, disabled = false) => <button key={label} type="button" data-pedal-target data-pedal-default={initial ? "" : undefined} aria-label={label} disabled={busy || loading || disabled} onClick={run} className="station-choice"><PortalIcon name={icon} /><span>{label}</span></button>;
   const gestureStrip = <div className="station-gesture-strip" data-pedal-ignore>
     <span><ExaminationFootKey pedal="left" /><ExaminationFootKey pedal="right" /><span>{focus.target.adjusting ? "ปรับค่า" : "เลือก"}</span></span>
-    <span><ExaminationFootKey /><span>{context === "confirm" && focus.target.confirm ? "ค้าง 1.5 วินาที" : focus.target.adjusting ? "กดเพื่อเสร็จ" : "กดเพื่อทำงาน"}</span></span>
+    <span><ExaminationFootKey pedal={(context === "confirm" && focus.target.confirm) || focus.target.completePart ? "right" : "center"} /><span>{(context === "confirm" && focus.target.confirm) || focus.target.completePart ? `ค้าง ${pedalTiming.confirmHoldMs / 1000} วินาที` : focus.target.adjusting ? "กดเพื่อเสร็จ" : "กดเพื่อทำงาน"}</span></span>
   </div>;
   const devTools = process.env.NODE_ENV === "development" ? <ExaminationDevTools {...pedalProps}
     open={devOpen} onToggle={() => { if (devOpen) pedals.cancel(); setDevOpen(!devOpen); }}
     context={context} primaryAction={primaryLabel} presentation={presentation} command={commandInput} onCommandChange={setCommandInput}
     onCommand={() => { if (!busy) executeCommand(commandInput); }} speechSupported={voice.support?.speech} busy={busy}
-    speechText={voice.interim || voice.error || speechPreviewText} /> : null;
+    speechText={voice.interim || voice.error || speechPreviewText} requestId={selected?.id} onResetCase={restore => { void resetTestCase(restore); }} /> : null;
 
   const feedback = notice && <div className={`station-notice ${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"}>
     <PortalIcon name={notice.tone === "success" ? "checkCircle" : notice.tone === "error" ? "bell" : "file"} /><span>{notice.text}</span>
@@ -457,45 +516,46 @@ export default function ExaminationWorkflow() {
   </div>;
   const reportLines = (item: ExaminationPart) => <div className="station-report-lines">{item.lines.map((line, index) => <div key={line.id} className={newLineIds.includes(line.id) ? "station-new-line" : undefined}><span>{String(index + 1).padStart(2, "0")}</span><p>{line.text}</p></div>)}</div>;
   return <div className="station-shell">
-    <header className="station-header">
-      <Link href="/portal" className="station-brand" aria-label="กลับหน้าหลักพยาธิวิทยา"><PortalIcon name="waveform" /><span>พยาธิวิทยา</span></Link>
-      <div className="station-header-actions"><button aria-label="เปิดคู่มือ" onClick={() => { setCommandArmed(false); setHelp(true); }}><PortalIcon name="file" />คู่มือ</button></div>
-    </header>
-    <main className={`station-main ${screen === "standby" || screen === "case" ? "is-lookup" : ""}`}>
+    <main className={`station-main ${screen === "standby" || screen === "case" ? "is-lookup" : `is-examination ${screen === "record" ? "is-recording" : "is-reviewing"}`}`}>
       {(screen === "standby" || screen === "case") && <div className={`station-lookup ${screen === "case" ? "has-case" : ""}`}>
       <section className="station-standby">
         <h1>ระบุเลขคำร้อง</h1>
         <form onSubmit={event => { event.preventDefault(); search(); }} className="station-search-form"><PortalIcon name="search" /><input autoFocus={screen === "standby"} aria-label="เลขคำร้องหรือ HN" placeholder="เลขคำร้อง หรือ HN" value={voice.destination === "search" && busy ? voice.interim : query} readOnly={busy} onChange={event => setQuery(event.target.value)} /><span className="station-search-mic">{!help && !confirmOpen && !panel && micStatus}</span><button aria-label="ค้นหา" disabled={busy || loading}><PortalIcon name="arrow" /></button></form>
-        {screen === "case" && <div className={`station-lookup-status ${caseStatusTone}`} role="status" aria-live="polite"><PortalIcon name={caseStatusTone === "ready" ? "checkCircle" : caseStatusTone === "blocked" ? "close" : "clock"} /><span>{caseStatusText}</span></div>}
+        <div className="station-lookup-readiness">{screen === "case" && <div className={`station-lookup-status ${caseStatusTone}`} role="status" aria-live="polite"><PortalIcon name={caseStatusTone === "ready" ? "checkCircle" : caseStatusTone === "blocked" ? "close" : "clock"} /><span>{caseStatusText}</span></div>}</div>
         <p className="station-sample-note">ทดลอง 0038 — พูด “ศูนย์ ศูนย์ สาม แปด” หรือพิมพ์ 0036</p>
         <ExaminationPedal {...pedalProps} context={context} primaryAction={primaryLabel} presentation={presentation} />
         <div className="station-start-voice"><ExaminationFootKey /><PortalIcon name="microphone" /><span>เหยียบค้าง พูดเลขคำร้อง แล้วปล่อย</span></div>
-        {searched && !matches.length && <p className="station-inline-error"><PortalIcon name="search" />ไม่พบคำร้อง ลองระบุเลขใหม่</p>}
+        <div className="station-lookup-error">{searched && !matches.length && <p className="station-inline-error"><PortalIcon name="search" />ไม่พบคำร้อง ลองระบุเลขใหม่</p>}</div>
       </section>
-      {screen === "case" && selected && <section className="station-case-preview">
-        <PortalIcon name="file" /><h2>{confirmed ? "ผลที่ยืนยันแล้ว" : "ตรวจสอบคำร้อง"}</h2><span className={`station-case-badge ${!readyForRecording(selected) ? "unready" : ""}`}>{confirmed ? "ยืนยันแล้ว" : readyForRecording(selected) ? "พร้อมบันทึก" : selected.review}</span>
-        <dl><div><dt>เลขคำร้อง</dt><dd>{selected.id}</dd></div><div><dt>HN</dt><dd>{selected.hn}</dd></div><div><dt>ประเภท</dt><dd>{selected.category}</dd></div><div><dt>ผู้ส่งตรวจ</dt><dd>{selected.sender}</dd></div><div><dt>เลขการตรวจ</dt><dd>{selected.accession || "ยังไม่มีเลขการตรวจ"}</dd></div></dl>
-      </section>}
+      {screen === "case" && selected && <ExaminationCaseContext request={selected} />}
       </div>}
-      {selected && (screen === "record" || screen === "review") && <div className="station-case-bar"><strong>{selected.id}</strong><span>{selected.hn}</span><span>{selected.accession || "ยังไม่มีเลขการตรวจ"}</span><span className="station-save-state" role="status"><PortalIcon name={saveStatus === "error" ? "bell" : "check"} />{saveStatus === "saved" ? "เก็บในเครื่องแล้ว" : saveStatus === "saving" ? "กำลังเก็บ…" : saveStatus === "error" ? "เก็บไม่สำเร็จ" : "รอเก็บข้อมูล"}</span></div>}
+      {selected && (screen === "record" || screen === "review") && <ExaminationCaseContext request={selected} />}
       {(screen === "record" || screen === "review") && <section className="station-report-workspace">
-        <div className="station-report-heading"><div><span className="station-stage-icon"><PortalIcon name={screen === "record" ? "microphone" : "checkCircle"} /></span><h1>{screen === "record" ? "บันทึกผลการตรวจ" : "ตรวจสอบผลการตรวจ"}</h1></div><span className="station-report-meta">{!help && !confirmOpen && !panel && commandCapture && <span className="station-command-armed" role="status">{busy ? "กำลังรับคำสั่ง" : "พูดคำสั่งครั้งถัดไป"}</span>}{!help && !confirmOpen && !panel && micStatus}<span>{confirmed ? "ยืนยันแล้ว" : `${screen === "review" ? lineCount : part.lines.length} บรรทัด`}<span className="station-divider">·</span>{shortTime(totalSeconds)}</span></span></div>
+        <div className="station-report-heading station-capture-heading">
+          <h1 className={screen === "record" ? "station-mic-label" : "station-review-title"}>{screen === "record" ? "บันทึกผลการตรวจ" : "ตรวจสอบผลการตรวจ"}</h1>
+          {!help && !confirmOpen && !panel && commandCapture && <span className="station-command-armed" role="status">{busy ? "กำลังรับคำสั่ง" : "พูดคำสั่งครั้งถัดไป"}</span>}
+          <ExaminationCaptureStatus phase={help || confirmOpen || panel ? "off" : voice.capturing ? "recording" : voice.mode === "starting" ? "starting" : voice.mode ? "processing" : "off"} stream={voice.inputStream} seconds={totalSeconds + (voice.capturing ? voice.seconds : 0)} />
+        </div>
         {confirmed && <div className="station-report-confirmed" role="status"><PortalIcon name="checkCircle" /><span>ยืนยันผลในเครื่องแล้ว · ล็อกการแก้ไข · ยังไม่ส่งเข้าระบบโรงพยาบาล</span></div>}
-        <div className="station-part-strip" aria-label="หัวข้อผลการตรวจ">{parts.map(item => <span key={item.id} aria-current={item.id === partId ? "true" : undefined} className={item.id === partId ? "active" : ""}>Part {item.id}{item.lines.length > 0 && <i />}</span>)}</div>
+        <div className="station-part-strip" aria-label="Part">{visibleParts.map(item => <span key={item.id} aria-current={item.id === partId ? "true" : undefined} className={item.id === partId ? "active" : ""}>Part {item.id}{completedPartIds.includes(item.id) ? <PortalIcon name="check" aria-label="บันทึก Part แล้ว" /> : item.lines.length > 0 && <i />}</span>)}</div>
         <article ref={report} className={`station-document ${screen === "review" ? "station-review-document" : ""}`} id="station-transcript" aria-label={screen === "review" ? "ผลตรวจทุก Part" : `ผลตรวจ Part ${partId}`}>
-          {screen === "review" ? parts.map(item => <section key={item.id} data-report-part={item.id} className={item.id === partId ? "station-review-part active" : "station-review-part"}><h2>Part {item.id} · {item.title}</h2>{item.lines.length ? reportLines(item) : <p className="station-review-empty">{clips.some(clip => clip.partId === item.id) ? "มีเสียงบันทึก · ยังไม่มีข้อความ" : "ยังไม่มีข้อความหรือเสียงบันทึก"}</p>}</section>) : <><h2>{part.title}</h2>{!part.lines.length && !voice.interim && <p className="station-empty-document">ยังไม่มีข้อความ</p>}{reportLines(part)}{voice.interim && voice.destination === "dictation" && <div className="station-report-lines station-interim"><div><PortalIcon name="microphone" /><p>{voice.interim}</p></div></div>}</>}
+          {screen === "review" ? reportParts.map(item => <section key={item.id} data-report-part={item.id} className={item.id === partId ? "station-review-part active" : "station-review-part"}><h2>Part {item.id}</h2>{item.lines.length ? reportLines(item) : <p className="station-review-empty">{clips.some(clip => clip.partId === item.id) ? "มีเสียงบันทึก · ยังไม่มีข้อความ" : "ยังไม่มีข้อความหรือเสียงบันทึก"}</p>}</section>) : <>{!part.lines.length && !voice.interim && <p className="station-empty-document">ยังไม่มีข้อความ</p>}{reportLines(part)}{voice.interim && voice.destination === "dictation" && <div className="station-report-lines station-interim"><div><PortalIcon name="microphone" /><p>{voice.interim}</p></div></div>}</>}
         </article>
       </section>}
+      {(screen === "record" || screen === "review") && <ExaminationSpecimenTemplate />}
     </main>
     {!help && !confirmOpen && !panel && feedback}
     <nav ref={rail} className="station-command-rail" aria-label="คำสั่งที่ใช้กับแป้นเหยียบ">
-      <div className="station-rail-activate" data-pedal-ignore><ExaminationFootKey /><span>{focus.target.adjusting ? "เสร็จ" : "เลือก"}</span></div>
+      <div className="station-rail-activate" data-pedal-ignore><ExaminationFootKey pedal={focus.target.completePart ? "right" : "center"} /><span>{focus.target.completePart ? "ค้าง 3 วินาที แล้วปล่อย" : focus.target.adjusting ? "เสร็จ" : "เลือก"}</span></div>
       <div className="station-command-navigation">
         {actions.length > 1 && <span className="station-rail-direction left" data-pedal-ignore><PortalIcon name="arrow" /><ExaminationFootKey pedal="left" /></span>}
-        <div className="station-command-items" style={{ maxWidth: actions.length * 262 - 12 }}>{actions.map(action => <button key={action.id} data-pedal-target data-action-id={action.id} data-pedal-adjust={action.id === "parts" ? "part" : undefined} data-pedal-default={action.initial ? "" : undefined} aria-pressed={action.id === "parts" ? focus.target.adjusting && focus.target.label === action.label : undefined} aria-current={focus.target.label === action.label ? "true" : undefined} aria-label={action.label} disabled={busy || loading || action.disabled} onClick={event => { focus.selectTarget(event.currentTarget); runRailAction(action.id); }}><PortalIcon name={action.icon} /><span>{action.label}</span></button>)}</div>
+        <div className="station-command-items" style={{ maxWidth: actions.length * 262 - 12 }}>{actions.map(action => action.id === "completePart" ? <ExaminationPedalButton key={action.id} {...pedalProps} pedal="right" data-pedal-target data-action-id={action.id} data-pedal-complete-part aria-label={action.label} aria-current={focus.target.completePart ? "true" : undefined} disabled={busy || loading || action.disabled} className={`station-part-hold ${pedals.pressed === "right" && focus.target.completePart ? "holding" : ""}`} onPress={pedal => { focus.selectTarget(rail.current?.querySelector<HTMLElement>("[data-pedal-complete-part]") ?? null); pedals.press(pedal, false, true); }}><PortalIcon name={action.icon} /><span>{action.label}</span><i style={{ transitionDuration: `${pedalTiming.confirmHoldMs}ms` }} /></ExaminationPedalButton> : <button key={action.id} data-pedal-target data-action-id={action.id} data-pedal-adjust={action.id === "parts" ? "part" : undefined} data-pedal-default={action.initial ? "" : undefined} aria-pressed={action.id === "parts" ? focus.target.adjusting && focus.target.label === action.label : undefined} aria-current={focus.target.label === action.label ? "true" : undefined} aria-label={action.label} disabled={busy || loading || action.disabled} onClick={event => { focus.selectTarget(event.currentTarget); runRailAction(action.id); }}><PortalIcon name={action.icon} /><span>{action.label}</span></button>)}</div>
         {actions.length > 1 && <span className="station-rail-direction right" data-pedal-ignore><ExaminationFootKey pedal="right" /><PortalIcon name="arrow" /></span>}
       </div>
       <div className="station-shortcuts">{!partAdjusting && <span><PortalIcon name="undo" /><ExaminationFootKey pedal="left" />×2 กลับ</span>}</div>
+      <button type="button" className="station-home" disabled={busy || loading} onClick={() => { void goHome(); }}><PortalIcon name="undo" />กลับหน้าหลัก</button>
+      {!help && !confirmOpen && !panel && <button type="button" className="station-help-corner" aria-label="เปิดคู่มือ" onClick={() => { setCommandArmed(false); setHelp(true); }}><PortalIcon name="file" />คู่มือ</button>}
+      <div className="station-font-setting" data-pedal-ignore><PortalFontControl /></div>
     </nav>
     {!help && !confirmOpen && !panel && devTools}
     <audio ref={audio} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={() => setPlayTime(audio.current?.currentTime ?? 0)} onError={() => setNotice("เปิดเสียงไม่ได้ ลองเลือกช่วงเสียงใหม่", "error", "playback")} />
@@ -507,6 +567,7 @@ export default function ExaminationWorkflow() {
         {panel === "results" && <div className="station-result-list">{matches.map((record, index) => <button key={record.id} data-pedal-target data-pedal-default={index === 0 ? "" : undefined} aria-label={record.id} onClick={() => { void choose(record); }}><PortalIcon name="file" /><span><strong>{record.id}</strong><span>{record.hn} · {readyForRecording(record) ? "พร้อมบันทึก" : record.review}</span></span><PortalIcon name="arrow" /></button>)}</div>}
         {panel === "tools" && <div className="station-tool-grid">
           {choice("เพิ่มข้อความ", "edit", openEntry, true, confirmed)}
+          <button type="button" data-pedal-target aria-label="แก้ล่าสุด" disabled={busy || loading || confirmed || !part.lines.length} onClick={() => openLatest("tools")} className="station-choice"><PortalIcon name="edit" /><span>แก้ล่าสุด</span></button>
           <button type="button" data-pedal-target aria-label="แก้บรรทัดอื่น" disabled={busy || loading || confirmed || !part.lines.length} onClick={() => { linesOrigin.current = "tools"; setPanel("lines"); }} className="station-choice"><PortalIcon name="edit" /><span>แก้บรรทัดอื่น</span></button>
           <button type="button" data-pedal-target aria-label="ฟังเสียง" disabled={busy || loading || !clips.length} onClick={openPlayback} className="station-choice"><PortalIcon name="volume" /><span>ฟังเสียง</span></button>
           {choice("ย้อนการแก้ไข", "undo", undo, false, confirmed || !past.length)}
@@ -546,12 +607,12 @@ export default function ExaminationWorkflow() {
       <div className="station-confirm-symbol"><PortalIcon name="checkCircle" /></div><h2 id="station-confirm-title">ยืนยันผลตรวจในเครื่องนี้</h2>
       {confirmOpen && !help && feedback}
       <dl className="station-confirm-identity"><div><dt>เลขคำร้อง</dt><dd>{selected?.id}</dd></div><div><dt>HN</dt><dd>{selected?.hn}</dd></div><div><dt>เลขการตรวจ</dt><dd>{selected?.accession || "ยังไม่มีเลขการตรวจ"}</dd></div></dl>
-      <div className="station-confirm-parts">{parts.map(item => <span key={item.id}>Part {item.id} · {item.lines.length ? `${item.lines.length} บรรทัด` : clips.some(clip => clip.partId === item.id) ? "มีเสียง · ไม่มีข้อความ" : "ไม่มีข้อความหรือเสียง"}</span>)}</div>
+      <div className="station-confirm-parts">{reportParts.map(item => <span key={item.id}>Part {item.id} · {item.lines.length ? `${item.lines.length} บรรทัด` : clips.some(clip => clip.partId === item.id) ? "มีเสียง · ไม่มีข้อความ" : "ไม่มีข้อความหรือเสียง"}</span>)}</div>
       <p>ยืนยันแล้วจะล็อกผลและแก้ไขไม่ได้ในเครื่องนี้<br />ยังไม่ส่งเข้าระบบโรงพยาบาล และไม่ใช่การลงนามทางคลินิก</p>
       <div className="station-confirm-actions"><button data-pedal-target aria-label="กลับไปตรวจผล" onClick={() => setConfirmOpen(false)}><PortalIcon name="undo" /><span>กลับไปตรวจผล</span></button>
-      <ExaminationPedalButton {...pedalProps} onPress={pedal => { focus.selectTarget(modal.current?.querySelector<HTMLElement>("[data-pedal-confirm]") ?? null); pedals.press(pedal, true); }} data-pedal-target data-pedal-default data-pedal-confirm aria-label="ยืนยันผลตรวจ" pedal="center" className={`station-confirm-hold ${pedals.pressed === "center" && focus.target.confirm ? "holding" : ""}`} disabled={loading}>
+      <ExaminationPedalButton {...pedalProps} onPress={pedal => { focus.selectTarget(modal.current?.querySelector<HTMLElement>("[data-pedal-confirm]") ?? null); pedals.press(pedal, true); }} data-pedal-target data-pedal-default data-pedal-confirm aria-label="ยืนยันผลตรวจ" pedal="right" className={`station-confirm-hold ${pedals.pressed === "right" && focus.target.confirm ? "holding" : ""}`} disabled={loading}>
         <PortalIcon name="check" /><span>ยืนยันผลตรวจ</span><i style={{ transitionDuration: `${pedalTiming.confirmHoldMs}ms` }} /></ExaminationPedalButton></div>
-      <div className="station-confirm-gesture"><ExaminationFootKey /><span>{focus.target.confirm ? "ค้าง 1.5 วินาที แล้วปล่อยเพื่อยืนยัน" : "กดเพื่อกลับไปตรวจผล"}</span></div>
+      <div className="station-confirm-gesture"><ExaminationFootKey pedal={focus.target.confirm ? "right" : "center"} /><span>{focus.target.confirm ? "ค้าง 3 วินาที แล้วปล่อยเพื่อยืนยัน" : "กดเพื่อกลับไปตรวจผล"}</span></div>
       {confirmOpen && !help && micStatus}
       {confirmOpen && !help && devTools}
     </dialog>

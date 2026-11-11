@@ -10,6 +10,7 @@ type Props = {
   pressed: Pedal | null; onPress: (pedal: Pedal) => void; onRelease: (pedal: Pedal, cancelled?: boolean) => void;
   command: string; onCommandChange: (value: string) => void; onCommand: () => void;
   speechSupported: boolean | undefined; speechText: string; busy: boolean;
+  requestId?: string; onResetCase?: (restore: boolean) => void;
 };
 
 export default function ExaminationDevTools(props: Props) {
@@ -29,6 +30,7 @@ export default function ExaminationDevTools(props: Props) {
       </div>
       <form onSubmit={event => { event.preventDefault(); props.onCommand(); }} className="station-dev-command"><input aria-label="คำสั่งทดสอบ" value={props.command} onChange={event => props.onCommandChange(event.target.value)} placeholder="พิมพ์คำสั่งทดสอบ" /><button disabled={props.busy || !props.command.trim()} aria-label="ส่งคำสั่งทดสอบ"><PortalIcon name="arrow" /></button></form>
       </details>
+      {props.requestId && props.onResetCase && <details className="station-dev-details"><summary>ข้อมูลทดสอบ · {props.requestId}</summary><div className="station-dev-speech"><button type="button" disabled={props.busy} onClick={() => props.onResetCase?.(false)}>รีเซ็ตเคสนี้ (เก็บสำเนาเดิม)</button><button type="button" disabled={props.busy} onClick={() => props.onResetCase?.(true)}>คืนงานก่อนรีเซ็ต</button></div></details>}
     </section>}
     <button className="station-dev-toggle" aria-label={props.open ? "ปิดเครื่องมือทดสอบแป้นเหยียบ" : "เปิดเครื่องมือทดสอบแป้นเหยียบ"} aria-expanded={props.open} aria-controls={props.open ? "station-dev-panel" : undefined} onClick={props.onToggle}><PortalIcon name={props.open ? "close" : "workflow"} /></button>
   </div>;

@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { seedSession } from "./auth-fixture";
 
-test("demo entry opens the portal and navigates to request intake", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "เข้าสู่ระบบ Student / Professor" }).click();
+test("authenticated session opens the portal and navigates to request intake", async ({ page }) => {
+  await seedSession(page);
+  await page.goto("/portal");
   await expect(page).toHaveURL(/\/portal$/);
   await page.getByRole("button", { name: /รับใบส่งตรวจ/ }).click();
   await expect(page).toHaveURL(/\/portal\/requests$/);
@@ -10,6 +11,7 @@ test("demo entry opens the portal and navigates to request intake", async ({ pag
 });
 
 test("language preference survives a reload in an isolated browser context", async ({ page }) => {
+  await seedSession(page);
   await page.goto("/portal");
   await page.getByRole("switch").click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
@@ -19,6 +21,7 @@ test("language preference survives a reload in an isolated browser context", asy
 });
 
 test("request identifiers stay independent when editing, searching and changing language", async ({ page }, testInfo) => {
+  await seedSession(page);
   await page.goto("/portal/requests");
   await page.getByRole("button", { name: /^แก้ไข REQ-/ }).first().click();
   const dialog = page.getByRole("dialog");

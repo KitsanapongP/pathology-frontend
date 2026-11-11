@@ -8,10 +8,10 @@ export function createExaminationGestures(callbacks: Callbacks, clock: Clock = {
   let held: { pedal: Pedal; at: number; context: PedalContext; binding: PedalBinding; holdStarted: boolean; timer?: unknown } | null = null;
   let pending: { pedal: Pedal; context: PedalContext; timer: unknown } | null = null;
   function clearPending() { if (pending) clock.clear(pending.timer); pending = null; }
-  function press(pedal: Pedal, context: PedalContext, enabled = true, confirmFocused = false, partAdjusting = false) {
+  function press(pedal: Pedal, context: PedalContext, enabled = true, confirmFocused = false, partAdjusting = false, completePartFocused = false) {
     if (!enabled || held) return;
     if (pending && (pending.pedal !== pedal || pending.context !== context)) clearPending();
-    const binding = resolvePedalBinding(context, pedal, confirmFocused, partAdjusting);
+    const binding = resolvePedalBinding(context, pedal, confirmFocused, partAdjusting, completePartFocused);
     const active = { pedal, context, binding, at: clock.now(), holdStarted: false, timer: undefined as unknown };
     held = active;
     callbacks.pressed(pedal);
@@ -32,6 +32,7 @@ export function createExaminationGestures(callbacks: Callbacks, clock: Clock = {
     if (cancelled) { clearPending(); return; }
     if (binding.hold && (active.holdStarted || binding.minimumHoldMs)) {
       if (binding.minimumHoldMs && clock.now() - active.at >= binding.minimumHoldMs) callbacks.perform(binding.hold, active.context);
+      else if (binding.minimumHoldMs && binding.tap) callbacks.perform(binding.tap, active.context);
       return;
     }
     if (!binding.doubleTap) { if (binding.tap) callbacks.perform(binding.tap, active.context); return; }
