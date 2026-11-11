@@ -2,6 +2,20 @@ export type PortalLanguage = "th" | "en";
 
 // Thai labels remain the canonical record/filter values. Translate presentation only.
 export const english: Record<string, string> = {
+  "เปลี่ยนรหัสผ่านครั้งแรก": "Change your initial password",
+  "รหัสผ่านเดิม": "Current password",
+  "รหัสผ่านใหม่": "New password",
+  "ยืนยันรหัสผ่านใหม่": "Confirm new password",
+  "แสดงรหัสผ่าน": "Show password",
+  "ซ่อนรหัสผ่าน": "Hide password",
+  "กรุณาระบุรหัสผ่านเดิม": "Enter your current password",
+  "รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร": "New password must contain at least 8 characters",
+  "รหัสผ่านใหม่และการยืนยันไม่ตรงกัน": "New password and confirmation do not match",
+  "รหัสผ่านเดิมไม่ถูกต้อง": "Current password is incorrect",
+  "เปลี่ยนรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบอีกครั้ง": "Password changed. Please sign in again.",
+  "ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง": "Unable to complete the request. Please try again.",
+  "กำลังเปลี่ยนรหัสผ่าน": "Changing password",
+  "เปลี่ยนรหัสผ่าน": "Change password",
   "ข้อความจากแพทย์ผู้ส่งตรวจ": "Referring doctor's note",
   "ตัวอักษรขนาดเล็ก": "Small text",
   "ตัวอักษรขนาดปกติ": "Normal text",

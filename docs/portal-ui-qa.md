@@ -1,5 +1,17 @@
 # Portal UI — 2 November 2026
 
+## Authentication additions — 11 November 2026
+
+- Task 3: visually inspected synthetic password-change screenshots at 1280×720
+  and 1896×1244. The three labelled fields, submit and logout fit without clipping
+  or horizontal overflow. The page has no portal header or foot-pedal targets.
+- Chromium verified that a restricted session cannot enter login or any portal
+  module, including the examination route, and stays restricted after reload.
+  Password values and tokens in browser QA are synthetic. Live backend/STT and
+  hardware were not exercised.
+
+## Previous portal checks
+
 - The shared header is mounted once by the portal layout, with Thai/English selection, three Aa font presets and a Thai/UK flag switch. Per browser feedback, the module navigation bar has been removed, and existing breadcrumb trails use 1.25rem text and larger icons across modules. Font presets are 90%, 100% and 120%; language and font preferences survive module navigation.
 - Module 1 uses a single persistent search panel: keyword, search scope, ward, examination, doctor, sex, received-date range, OCR status and review status. Results update immediately. Clear filters resets the same filter state as before.
 - Browser checks: desktop 1280×720, English at 100% and 130%, and Thai at mobile 390×844. No document-wide horizontal overflow in the checked request and slide storage screens. Request tables intentionally scroll horizontally within their own container.

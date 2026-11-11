@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import LoginNotice from "./login-notice";
 
 function Icon({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
@@ -25,6 +26,7 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="mt-8" aria-label="เข้าสู่ระบบพยาธิวิทยา">
+      <LoginNotice />
       <div>
         <label htmlFor="username" className="mb-2 block text-sm font-semibold text-[#102d58]">ชื่อผู้ใช้ / อีเมล</label>
         <div className="login-field">

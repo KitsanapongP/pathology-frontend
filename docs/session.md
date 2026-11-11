@@ -54,3 +54,21 @@ Task 2 verified on 2026-11-11: check passed (25 Node tests, 46 Vitest tests,
 TypeScript and production build); lint passed after removing an unused import.
 All five Chromium tests passed, including 360 seconds of simulated session time
 and back/reload after failed server logout. Live Keycloak/CORS remains unverified.
+
+## First password change (Task 3)
+
+`/change-password` is the only permitted route for a restricted session, including
+after reload. It validates the current password, new password (at least 8
+characters) and a matching confirmation. Only `{ old_password, new_password }`
+is sent in `PUT /v1/users/me/password`; passwords are never persisted. Backend
+field errors remain field-scoped; `users.wrong_password` marks the current-password
+field by code. Submissions are single-flight and aborted when the form unmounts.
+Success records a one-time login notice, clears local tokens immediately and
+replaces the route with login because backend closes every user session. There
+is no client-side flag bypass or automatic login after a password change.
+
+Task 3 verified on 2026-11-11: `npm run check` passed (25 Node tests, 49 Vitest
+tests and production build). All nine synthetic Chromium tests passed, including
+forced-route/reload isolation, validation, wrong-password mapping and clearing
+tokens with the login success notice. Real re-login with a new password is
+covered by Task 4's combined synthetic flow; live backend verification is pending.
