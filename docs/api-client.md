@@ -16,9 +16,10 @@ NEXT_PUBLIC_AUTH_MODE=demo
 NEXT_PUBLIC_API_BASE_URL=http://localhost:9100
 ```
 
-The temporary demo setting restores the role preview buttons requested while no
-backend accounts are available; service HTTP calls are disabled in that mode.
-Set `NEXT_PUBLIC_AUTH_MODE=api` and restart/rebuild to use the auth/API client.
+The temporary demo setting adds small skip-login shortcuts beside the normal
+login form while backend accounts are unavailable. Service HTTP calls are
+disabled after choosing a preview role; the normal form still uses real auth.
+Set `NEXT_PUBLIC_AUTH_MODE=api` and restart/rebuild to hide the shortcuts.
 Unspecified mode also uses API auth. See `docs/session.md` for both modes.
 
 This is the portal service when backend runs on the same machine. Dev uses

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LoginForm from "@/components/login-form";
+import DemoLoginShortcuts from "@/components/demo-login-shortcuts";
 
 export const metadata: Metadata = {
   title: "เข้าสู่ระบบ | Pathology",
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <main className="login-background relative isolate flex min-h-svh items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+    <main className="login-background relative isolate flex min-h-svh flex-col items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
       <section aria-labelledby="login-heading" className="w-full max-w-[550px] overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-[0_20px_65px_-15px_rgba(26,49,82,0.35)] backdrop-blur-sm">
         <div className="px-6 pb-6 pt-9 sm:px-11 sm:pt-10">
           <div className="mb-7 flex items-center justify-center gap-6 sm:gap-7" aria-label="Pathology Platform">
@@ -33,6 +34,7 @@ export default function LoginPage() {
           <p className="text-xs leading-6 text-[#6b7b94]">ระบบนี้สำหรับบุคลากรและผู้ที่ได้รับอนุญาตเท่านั้น<br className="hidden sm:block" />เพื่อความปลอดภัยของข้อมูล กรุณาออกจากระบบทุกครั้งหลังใช้งาน</p>
         </footer>
       </section>
+      <DemoLoginShortcuts />
     </main>
   );
 }

@@ -3,22 +3,27 @@
 ## Temporary role preview
 
 While backend accounts are unavailable, the user requested the original role
-entry buttons. Set `NEXT_PUBLIC_AUTH_MODE=demo` to show Student / Professor
-(`/portal`) and Admin (`/portal/admin`) entry without username/password. The local
+entry buttons. Set `NEXT_PUBLIC_AUTH_MODE=demo` to show small skip-login shortcuts
+for Student / Professor (`/portal`) and Admin (`/portal/admin`) alongside the
+normal username/password form. The local
 example, Compose and GitHub Pages preview enable this mode. Direct Docker builds
 and unset mode default to real API authentication. Like other public env values,
 the mode is fixed at build time: restart dev or rebuild after changing it.
 
-Demo persists only a tab-scoped role in `pathology:demo-session:v1`; it creates no
-access/refresh tokens, never starts real-session restoration and blocks service
-HTTP calls. Reload keeps the selected preview role; logout clears it and prevents
+Choosing a shortcut persists only a tab-scoped role in `pathology:demo-session:v1`;
+it clears the prior local real session, creates no access/refresh tokens, and
+blocks service HTTP calls while previewing. Reload keeps the selected preview
+role without restoring real auth; logout clears it and prevents
 entry until a role is chosen again. Student / Professor preview does not enter
 the Admin route. Demo cannot enter the mandatory-password-change route. Existing
-real sessions, preferences and clinical drafts are not modified by demo logout.
+preferences and clinical drafts are not modified by demo logout. Before choosing
+a shortcut, the normal login form can authenticate against the configured API.
+Real authenticated/password-required states retain their API guards and logout;
+the shortcuts cannot release a mandatory-password-change restriction.
 
-To resume the implemented real-auth workflow, set `NEXT_PUBLIC_AUTH_MODE=api`
-and provide the API URL, then restart/rebuild. GitHub Pages must change its build
-env from demo to api when real-auth testing is ready. A stored demo role grants
+To hide the shortcuts, set `NEXT_PUBLIC_AUTH_MODE=api` and restart/rebuild. Real
+login also works with the shortcuts visible when an API URL is configured.
+GitHub Pages can remove the demo build setting when previews end. A stored demo role grants
 no access in API mode. The session behavior below describes API mode.
 
 `npm run test:e2e` always builds API mode and retains the real-auth mock tests.
@@ -28,9 +33,10 @@ production server. These commands run sequentially because they share port 3100.
 
 Preview verification on 2026-11-11: `npm run check` passed (25 Node tests, 64
 Vitest tests, lint, TypeScript and production build). All 15 API-mode browser
-tests and four demo-mode browser tests passed in separate isolated server runs.
+tests and seven shortcut-enabled browser tests passed in separate isolated server runs.
 GitHub Pages export built successfully; preview screenshots were inspected at
-1280×720 and 1896×1244. No live login or backend writes were performed.
+1280×720, 1896×1244 and 390×844. These checks include real-auth mocks with shortcuts
+visible and mandatory-password enforcement. No live login or backend writes were performed.
 
 ## API sessions
 

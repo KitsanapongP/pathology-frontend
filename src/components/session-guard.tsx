@@ -12,6 +12,13 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
 
 function DemoGuard({ children }: { children: React.ReactNode }) {
   const state = useSyncExternalStore(subscribeDemo, demoSnapshot, (): DemoState => "checking");
+  const apiState = useSyncExternalStore(portalSession.subscribe, portalSession.getSnapshot, (): SessionState => "checking");
+  if (state === "checking") return null;
+  if (state === "anonymous" || apiState === "password-required" || apiState === "authenticated") return <ApiSessionGuard>{children}</ApiSessionGuard>;
+  return <DemoRoleGuard state={state}>{children}</DemoRoleGuard>;
+}
+
+function DemoRoleGuard({ state, children }: { state: DemoState; children: React.ReactNode }) {
   const router = useRouter();
   const destination = demoDestination(state, usePathname());
   useEffect(() => { if (destination) router.replace(destination); }, [destination, router]);

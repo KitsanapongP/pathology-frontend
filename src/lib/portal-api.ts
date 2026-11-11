@@ -3,10 +3,12 @@
 import { createApiClient, type ApiRequestOptions } from "@/lib/api-client";
 import { portalLanguageSnapshot } from "@/lib/portal-preference-store";
 import { createSessionManager, type SessionTokens } from "@/lib/session-manager";
-import { isDemoAuth } from "@/lib/demo-session";
+import { demoSnapshot, isDemoAuth } from "@/lib/demo-session";
 
 function requireApiAuth() {
-  if (isDemoAuth()) throw new Error("Service HTTP calls are disabled in demo mode. Set NEXT_PUBLIC_AUTH_MODE=api and rebuild to use the backend.");
+  const state = portalSession.getSnapshot();
+  const realSession = state === "authenticated" || state === "password-required";
+  if (isDemoAuth() && !realSession && ["workspace", "admin"].includes(demoSnapshot())) throw new Error("Service HTTP calls are disabled in demo mode. Sign out of the preview and use the login form to connect to the backend.");
 }
 
 function transport(getAccessToken: () => string | null | Promise<string | null>) {

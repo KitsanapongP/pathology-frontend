@@ -2,6 +2,12 @@
 
 ## Authentication additions — 11 November 2026
 
+- Latest refinement: username/password and the normal login button remain the
+  main card. Two small skip-role shortcuts sit at the viewport's bottom-right
+  on desktop, and in normal flow right-aligned below the card on mobile. Inspected
+  1280×720, 1896×1244 and 390×844; no overlap or horizontal overflow. Shortcut-enabled
+  browser tests also cover real login and mandatory-password restrictions.
+
 - Temporary role preview restored at the user's request: visually inspected both
   role buttons at 1280×720 and 1896×1244, with no clipping/overflow. Student /
   Professor opens `/portal`; Admin opens `/portal/admin`. Both survive reload,

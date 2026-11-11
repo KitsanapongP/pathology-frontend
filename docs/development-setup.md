@@ -3,9 +3,9 @@
 The standard development flow remains `npm ci` followed by `npm run dev` with
 Node.js 24. Docker and browser testing are optional workflows described below.
 Business modules currently use fixtures. The user-requested temporary demo mode
-provides Student / Professor and Admin entry while backend accounts are absent.
-Set `NEXT_PUBLIC_AUTH_MODE=demo` in `.env.local` (the example enables it). For real
-authentication set it to `api`; that needs backend/VPN and approved API configuration.
+adds small Student / Professor and Admin skip shortcuts beside the real login form.
+Set `NEXT_PUBLIC_AUTH_MODE=demo` in `.env.local` (the example enables it), or `api`
+to hide the shortcuts. Real login needs backend/VPN and approved API configuration.
 Isolated browser tests mock auth with synthetic tokens and need no credentials.
 
 Repository files do not configure GitLab project settings, runners, secrets,
