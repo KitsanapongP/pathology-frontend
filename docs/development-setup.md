@@ -110,10 +110,10 @@ and is reached through the infra nginx at `app.<NGINX_DOMAIN>` (`UPSTREAM_WEB`).
 The app has no runtime `.env` yet; `NEXT_PUBLIC_*` values are fixed at build time.
 Run the configuration through GitLab's CI Lint before pushing a tag.
 
-For a source update to GitLab `dev`, fetch that branch first, merge the reviewed
-frontend work on top of it, preserve the group's CI/deploy files, and push only
-the `dev` branch without force or tags. A branch push runs checks; it does not
-deploy. The request-identifier browser regression also needs the shared synthetic
+For the initial user-authorized source synchronization, fetch GitLab `dev`
+first and preserve the group's CI/deploy history. Subsequent work follows the
+shared branch/MR workflow below. A branch push runs checks; it does not deploy.
+The request-identifier browser regression also needs the shared synthetic
 auth fixture now that portal routes are guarded. Never upload ignored local env
 files or the private dev IP. Before a later tag deployment, the maintainer must
 provide the approved `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_AUTH_MODE` as
@@ -127,6 +127,62 @@ Local validation for the frontend/dev integration on 2026-11-11 passed:
 production dependency audit (zero reported vulnerabilities). GitLab's existing
 CI/deploy files were preserved byte-for-byte; runner/pipeline results must be
 checked on GitLab after publication.
+
+### Shared GitHub / GitLab history
+
+`gitlab` is the team's GitLab remote; `origin` is the GitHub preview/backup remote.
+GitLab `dev` is the reviewed integration source and GitHub `dev` follows it.
+GitHub `main` is promoted explicitly for preview/release; GitLab `main` and deploy
+tags are not part of routine synchronization.
+
+Start a task from the current reviewed dev commit (use a new branch name):
+
+```powershell
+git fetch gitlab dev
+git switch -c feature/task-5-profile gitlab/dev
+# Implement, check, and commit one reviewable task.
+git add -- <explicit changed paths>
+git commit -m "[FE][Task 5] Add profile editing"
+git push -u origin HEAD
+git push gitlab HEAD
+```
+
+Both remotes receive the same commit/hash and descriptive task message. Branch
+names sent to GitLab must be `feature/*`, `fix/*` or `hotfix/*` (its CI rejects
+the default `codex/` prefix). Open one GitLab MR from the task branch into `dev`.
+Push follow-up commits to that same branch on both remotes to update the existing
+MR. Group commits by a reviewable behavior; one MR need not equal one commit.
+Draft MRs are useful while a task is still being built. Do not independently
+merge the task again on GitHub: GitLab may create a merge/squash commit whose
+actual resulting hash must be copied.
+
+After the maintainer merges the MR:
+
+```powershell
+npm run git:sync-dev
+git fetch gitlab dev
+git switch dev
+git merge --ff-only gitlab/dev
+```
+
+The helper copies only GitLab `dev` to GitHub `dev`, creating the GitHub branch if
+absent. It never pushes the local working branch, GitLab, main or tags; it does
+not change the working tree or checkout. It uses normal fast-forward pushes and
+stops if GitHub has independent changes, including a concurrent conflicting
+push. Reconcile divergence through a reviewed GitLab MR and retry; never force
+sync. Remote updates are sequential, not a cross-service transaction: rerun after
+fixing connectivity/permissions if one side remains behind. No scheduled/background
+mirror or new credentials are installed by this workflow.
+
+For the one-time initial sync, GitHub `main`, GitHub `dev` and GitLab `dev` start
+at the same commit. Thereafter only the two `dev` branches are expected to match
+after each reviewed merge. Push to GitHub `main` only when intentionally promoting
+that reviewed dev commit for the existing Pages workflow.
+
+Sync helper verification: `npm run check` passed with 25 Node tests and 68 Vitest
+tests. Its three offline Git integration tests use temporary local bare remotes:
+they verify creating GitHub dev, fast-forwarding the reviewed source, refusing
+divergence, and leaving an unreviewed local HEAD and main/tags untouched.
 
 Audit fails for high/critical production dependency findings. Triage findings;
 do not run `npm audit fix --force` automatically. Development dependencies should

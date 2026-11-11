@@ -15,6 +15,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Repository conventions
 
+## GitHub and GitLab workflow
+
+- GitLab `dev` is the reviewed integration source; GitHub `dev` mirrors the same commit history. Make one task commit and push the same feature/fix/hotfix branch to both remotes. GitLab CI requires `feature/*`, `fix/*` or `hotfix/*`, which supersedes the default `codex/` prefix for branches sent there. Open one GitLab MR per reviewable task targeting `dev`; further commits update that MR. Do not open a second review queue on GitHub unless requested.
+- After the maintainer merges the GitLab MR, run `npm run git:sync-dev` to fast-forward GitHub `dev` from GitLab `dev`. It never pushes local HEAD, GitLab, main or tags, and refuses divergent GitHub history. Keep merge-result hashes identical by syncing the actual GitLab merge commit, not independently merging/squashing the same MR on GitHub. Never rewrite shared commit names/history to make them match.
+- GitHub `main` is promoted explicitly for preview/release (its push deploys Pages); do not advance it automatically with every task. GitLab `main`, deploy tags, credentials and repository mirroring settings need their own authorization. The initial user-authorized synchronization aligns GitHub main/dev and GitLab dev once; subsequent work uses the MR flow above. See `docs/development-setup.md`.
+
 ## Local infrastructure and test setup
 
 - `docs/development-setup.md` describes Docker, GitLab CI, security limits and the pending real Postman contract. Publication must follow the user's requested remote and scope; authorization to push GitHub does not authorize uploading the initial frontend to GitLab.
