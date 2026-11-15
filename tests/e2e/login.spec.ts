@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { success, tokenData } from "./auth-fixture";
 
 async function fillLogin(page: import("@playwright/test").Page, password = "synthetic-old") {
+  await page.getByLabel("รหัสโรงพยาบาล", { exact: true }).fill("synthetic-hospital");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill(password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
@@ -11,7 +12,7 @@ test("login validates, reports invalid credentials, then creates a reloadable se
   let logins = 0; let refreshes = 0;
   await page.route("http://api.e2e.test/v1/auth/login", async route => {
     logins++;
-    expect(route.request().postDataJSON()).toEqual({ username: "synthetic-user", password: "synthetic-old" });
+    expect(route.request().postDataJSON()).toEqual({ tenant_code: "synthetic-hospital", username: "synthetic-user", password: "synthetic-old" });
     expect(route.request().headers()["authorization"]).toBeUndefined();
     expect(route.request().headers()["accept-language"]).toBe("th");
     if (logins === 1) await route.fulfill({ status: 401, json: { message: "Different backend translation", status: "error", status_code: 401, error_code: "auth.invalid_credentials", request_id: "synthetic" } });
@@ -23,7 +24,7 @@ test("login validates, reports invalid credentials, then creates a reloadable se
   await expect(page.getByText("กรุณาระบุชื่อผู้ใช้")).toBeVisible();
   expect(logins).toBe(0);
   await fillLogin(page);
-  await expect(page.getByRole("form").getByRole("alert")).toHaveText("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+  await expect(page.getByRole("form").getByRole("alert")).toHaveText("รหัสโรงพยาบาล ชื่อผู้ใช้ หรือรหัสผ่านไม่ถูกต้อง");
   expect(refreshes).toBe(0);
   await fillLogin(page);
   await expect(page).toHaveURL("/portal");
@@ -38,7 +39,7 @@ test("login validates, reports invalid credentials, then creates a reloadable se
 test("new user changes password, signs in again with it and is not forced twice", async ({ page }) => {
   let changed = false;
   await page.route("http://api.e2e.test/v1/auth/login", async route => {
-    expect(route.request().postDataJSON()).toEqual({ username: "synthetic-user", password: changed ? "synthetic-new" : "synthetic-old" });
+    expect(route.request().postDataJSON()).toEqual({ tenant_code: "synthetic-hospital", username: "synthetic-user", password: changed ? "synthetic-new" : "synthetic-old" });
     await route.fulfill({ json: success(tokenData(!changed)) });
   });
   await page.route("http://api.e2e.test/v1/auth/refresh", route => route.fulfill({ json: success(tokenData(!changed)) }));
@@ -67,6 +68,7 @@ test("login displays Swagger length limits under the correct fields before sendi
   let logins = 0;
   await page.route("http://api.e2e.test/v1/auth/login", route => { logins++; return route.fulfill({ json: success(tokenData()) }); });
   await page.goto("/");
+  await page.getByLabel("รหัสโรงพยาบาล", { exact: true }).fill("synthetic-hospital");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("u".repeat(101));
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill("p".repeat(257));
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
@@ -89,3 +91,21 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 124
     await page.screenshot({ path: testInfo.outputPath("login-form.png"), fullPage: true });
   });
 }
+
+test("login picks the hospital from the portal's tenant list", async ({ page }) => {
+  await page.route("http://api.e2e.test/v1/auth/tenants", route => {
+    expect(route.request().headers()["authorization"]).toBeUndefined();
+    return route.fulfill({ json: success([{ code: "hospital-a", name: "Synthetic Hospital A" }, { code: "hospital-b", name: "Synthetic Hospital B" }]) });
+  });
+  await page.route("http://api.e2e.test/v1/auth/login", async route => {
+    expect(route.request().postDataJSON()).toEqual({ tenant_code: "hospital-b", username: "synthetic-user", password: "synthetic-old" });
+    await route.fulfill({ json: success(tokenData()) });
+  });
+  await page.goto("/");
+  await page.getByLabel("โรงพยาบาล", { exact: true }).selectOption({ label: "Synthetic Hospital B" });
+  await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill("synthetic-old");
+  await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
+  await expect(page).toHaveURL("/portal");
+  expect(await page.evaluate(() => localStorage.getItem("pathology:tenant-code:v1"))).toBe("hospital-b");
+});

@@ -64,7 +64,8 @@ propagate unchanged. Rate-limit errors do not automatically retry writes.
 
 | Action | Contract |
 | --- | --- |
-| Login | `POST /v1/auth/login` with `{ username, password }`, no bearer token |
+| Login hospitals | `GET /v1/auth/tenants`, no bearer token — `[{ code, name }]` of hospitals that can log in; the login form shows a select by name (one hospital = preselected and hidden; load failure or empty = typed code) |
+| Login | `POST /v1/auth/login` with `{ tenant_code, username, password }`, no bearer token — `tenant_code` is the hospital code (`tenants.code`; one Keycloak realm per hospital), remembered after a successful login in `pathology:tenant-code:v1` localStorage |
 | Refresh | `POST /v1/auth/refresh` with `{ refresh_token }` |
 | Logout | `POST /v1/auth/logout` with `{ refresh_token }` |
 | Change password | `PUT /v1/users/me/password` with `{ old_password, new_password }` |

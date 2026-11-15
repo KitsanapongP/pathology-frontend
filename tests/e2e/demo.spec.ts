@@ -27,7 +27,8 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 124
 for (const role of ["Student / Professor", "Admin"]) {
   test(`demo ${role} opens its dashboard, reloads and signs out without API calls`, async ({ page }) => {
     let apiCalls = 0;
-    await page.route("**/v1/**", route => { apiCalls++; return route.abort(); });
+    // หน้า login โหลดรายชื่อโรงพยาบาล (auth/tenants ไม่ต้อง login) เสมอ — ไม่ใช่ API ของ session demo
+    await page.route("**/v1/**", route => { if (!route.request().url().endsWith("/v1/auth/tenants")) apiCalls++; return route.abort(); });
     await page.goto("/");
     await page.getByRole("button", { name: `ข้ามการเข้าสู่ระบบ ${role}`, exact: true }).click();
     const destination = role === "Admin" ? "/portal/admin" : "/portal";
@@ -47,6 +48,7 @@ for (const role of ["Student / Professor", "Admin"]) {
 test("normal login still works with skip buttons enabled", async ({ page }) => {
   await page.route("http://api.e2e.test/v1/auth/login", route => route.fulfill({ json: success(tokenData()) }));
   await page.goto("/");
+  await page.getByLabel("รหัสโรงพยาบาล", { exact: true }).fill("synthetic-hospital");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill("synthetic-password");
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
@@ -58,6 +60,7 @@ test("normal login still works with skip buttons enabled", async ({ page }) => {
 test("real password restrictions remain enforced with skip buttons enabled", async ({ page }) => {
   await page.route("http://api.e2e.test/v1/auth/login", route => route.fulfill({ json: success(tokenData(true)) }));
   await page.goto("/");
+  await page.getByLabel("รหัสโรงพยาบาล", { exact: true }).fill("synthetic-hospital");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill("synthetic-password");
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
