@@ -46,9 +46,9 @@ for (const role of ["Student / Professor", "Admin"]) {
 }
 
 test("normal login still works with skip buttons enabled", async ({ page }) => {
+  await page.route("http://api.e2e.test/v1/auth/tenants", route => route.fulfill({ json: success([{ code: "synthetic-hospital", name: "Synthetic Hospital" }]) }));
   await page.route("http://api.e2e.test/v1/auth/login", route => route.fulfill({ json: success(tokenData()) }));
   await page.goto("/");
-  await page.getByLabel("รหัสโรงพยาบาล", { exact: true }).fill("synthetic-hospital");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill("synthetic-password");
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
@@ -58,9 +58,9 @@ test("normal login still works with skip buttons enabled", async ({ page }) => {
 });
 
 test("real password restrictions remain enforced with skip buttons enabled", async ({ page }) => {
+  await page.route("http://api.e2e.test/v1/auth/tenants", route => route.fulfill({ json: success([{ code: "synthetic-hospital", name: "Synthetic Hospital" }]) }));
   await page.route("http://api.e2e.test/v1/auth/login", route => route.fulfill({ json: success(tokenData(true)) }));
   await page.goto("/");
-  await page.getByLabel("รหัสโรงพยาบาล", { exact: true }).fill("synthetic-hospital");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill("synthetic-password");
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();

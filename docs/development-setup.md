@@ -24,6 +24,8 @@ Windows and Linux, then starts a fresh production server on 127.0.0.1:3100.
 Run browser suites sequentially and do not reuse the user's server/browser.
 Tests use synthetic data and never prove live Keycloak, microphone or hardware
 behavior. For a normal `npm start` after E2E, rebuild with your intended env.
+If Chromium reports `ERR_NO_BUFFER_SPACE` while loading local chunks on Windows,
+rerun with fewer workers: `npm run test:e2e -- --workers=2` (also works for demo).
 
 After dependency changes, verify `npm ci` on Windows and Linux. If Linux reports
 missing optional native lockfile entries, regenerate the lockfile in a clean
@@ -72,6 +74,13 @@ git merge --ff-only gitlab/dev
 git push gitlab dev
 git push origin dev
 ```
+
+For a batch, keep one commit per task. Once all tasks are checked and publication
+is authorized, sync the same task commits through both `dev` branches and open
+one combined GitHub `dev` -> `main` PR. The user approves and merges it; the user
+opens the GitLab `dev` -> `main` MR for senior review. Never merge either `main`
+branch automatically. A request to leave work uncommitted also means no push or
+early batch PR.
 
 Use descriptive messages such as `[FE][Task 5] Add profile editing`. If either
 remote has independent changes, reconcile them while preserving history before

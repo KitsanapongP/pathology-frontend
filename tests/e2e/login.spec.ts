@@ -1,8 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { success, tokenData } from "./auth-fixture";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("http://api.e2e.test/v1/auth/tenants", route => route.fulfill({ json: success([{ code: "synthetic-hospital", name: "Synthetic Hospital" }]) }));
+});
+
 async function fillLogin(page: import("@playwright/test").Page, password = "synthetic-old") {
-  await page.getByLabel("รหัสโรงพยาบาล", { exact: true }).fill("synthetic-hospital");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill(password);
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
@@ -24,7 +27,7 @@ test("login validates, reports invalid credentials, then creates a reloadable se
   await expect(page.getByText("กรุณาระบุชื่อผู้ใช้")).toBeVisible();
   expect(logins).toBe(0);
   await fillLogin(page);
-  await expect(page.getByRole("form").getByRole("alert")).toHaveText("รหัสโรงพยาบาล ชื่อผู้ใช้ หรือรหัสผ่านไม่ถูกต้อง");
+  await expect(page.getByRole("form").getByRole("alert")).toHaveText("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
   expect(refreshes).toBe(0);
   await fillLogin(page);
   await expect(page).toHaveURL("/portal");
@@ -68,7 +71,6 @@ test("login displays Swagger length limits under the correct fields before sendi
   let logins = 0;
   await page.route("http://api.e2e.test/v1/auth/login", route => { logins++; return route.fulfill({ json: success(tokenData()) }); });
   await page.goto("/");
-  await page.getByLabel("รหัสโรงพยาบาล", { exact: true }).fill("synthetic-hospital");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("u".repeat(101));
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill("p".repeat(257));
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
@@ -82,17 +84,19 @@ test("login displays Swagger length limits under the correct fields before sendi
   expect(logins).toBe(1);
 });
 
-for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 1244 }, { width: 390, height: 844 }]) {
+for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 1244 }, { width: 390, height: 844 }, { width: 482, height: 671 }]) {
   test(`login form fits ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
     await page.goto("/");
     await expect(page.getByLabel("ชื่อผู้ใช้", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("โรงพยาบาล", { exact: true })).toHaveCount(0);
+    await expect(page.getByLabel("รหัสโรงพยาบาล", { exact: true })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath("login-form.png"), fullPage: true });
   });
 }
 
-test("login picks the hospital from the portal's tenant list", async ({ page }) => {
+test("login uses the remembered hospital without a visible hospital field", async ({ page }) => {
   await page.route("http://api.e2e.test/v1/auth/tenants", route => {
     expect(route.request().headers()["authorization"]).toBeUndefined();
     return route.fulfill({ json: success([{ code: "hospital-a", name: "Synthetic Hospital A" }, { code: "hospital-b", name: "Synthetic Hospital B" }]) });
@@ -101,8 +105,9 @@ test("login picks the hospital from the portal's tenant list", async ({ page }) 
     expect(route.request().postDataJSON()).toEqual({ tenant_code: "hospital-b", username: "synthetic-user", password: "synthetic-old" });
     await route.fulfill({ json: success(tokenData()) });
   });
+  await page.addInitScript(() => localStorage.setItem("pathology:tenant-code:v1", "hospital-b"));
   await page.goto("/");
-  await page.getByLabel("โรงพยาบาล", { exact: true }).selectOption({ label: "Synthetic Hospital B" });
+  await expect(page.getByRole("combobox")).toHaveCount(0);
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill("synthetic-old");
   await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();

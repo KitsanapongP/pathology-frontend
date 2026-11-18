@@ -194,6 +194,9 @@ button:not(:disabled), select {
   font-size: 0.75rem;
 }
 
+/* Contain wide dashboard tables and their positioned contents in the scroller. */
+.portal-table-scroll { position: relative; max-width: 100%; overflow-x: auto; }
+
 .portal-table th {
   height: 33px;
   padding: 7px 12px;
@@ -1010,7 +1013,7 @@ button:not(:disabled), select {
 .portal-signout svg { width: 20px; height: 20px; flex-shrink: 0; }
 @media (prefers-reduced-motion: reduce) { .portal-language-thumb, .portal-font-option { transition: none; } }
 .portal-signout { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 8px; font-size: .9375rem; }
-.portal-global-header :focus-visible { outline: 3px solid #4285d9; outline-offset: 3px; }
+.portal-global-header :focus-visible, .portal-language-switch:focus-visible { outline: 3px solid #4285d9; outline-offset: 3px; }
 .portal-nav-item { font-size: 1rem; min-height: 54px; }
 
 /* Module 1: one persistent search panel, with generous controls and readable rows. */

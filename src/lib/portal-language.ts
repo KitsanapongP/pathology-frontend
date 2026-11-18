@@ -2,6 +2,15 @@ export type PortalLanguage = "th" | "en";
 
 // Thai labels remain the canonical record/filter values. Translate presentation only.
 export const english: Record<string, string> = {
+  "ยังไม่สามารถระบุโรงพยาบาลสำหรับเข้าสู่ระบบได้ กรุณาติดต่อผู้ดูแลระบบ": "Unable to determine the sign-in hospital. Contact your administrator.",
+  "ระบบสารสนเทศพยาธิวิทยา": "Pathology information system",
+  "สำหรับระบบสารสนเทศงานพยาธิวิทยา": "Pathology information system",
+  "ระบบนี้สำหรับบุคลากรและผู้ที่ได้รับอนุญาตเท่านั้น": "Access is restricted to authorized personnel.",
+  "เพื่อความปลอดภัยของข้อมูล กรุณาออกจากระบบทุกครั้งหลังใช้งาน": "To protect information, sign out after each use.",
+  "ข้าม · Student / Professor": "Skip · Student / Professor",
+  "ข้าม · Admin": "Skip · Admin",
+  "ระยะเวลาพร้อมใช้งาน": "Uptime",
+  "ภาษาอังกฤษ": "English",
   "ข้ามการเข้าสู่ระบบ": "Skip sign in",
   "ข้ามการเข้าสู่ระบบ Student / Professor": "Skip sign in as Student / Professor",
   "ข้ามการเข้าสู่ระบบ Admin": "Skip sign in as Admin",
