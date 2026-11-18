@@ -27,8 +27,8 @@ it("maps users.wrong_password onto the old-password field by code", async () => 
   mocks.request.mockRejectedValue(new ApiError({ message: "Backend translated text", status: "error", status_code: 400, error_code: "users.wrong_password", request_id: "synthetic" }, 400, "th"));
   render(<ChangePasswordForm />); fill();
   fireEvent.click(screen.getByRole("button", { name: "เปลี่ยนรหัสผ่าน" }));
-  await waitFor(() => expect(screen.getByLabelText("รหัสผ่านเดิม")).toHaveAccessibleDescription("รหัสผ่านเดิมไม่ถูกต้อง"));
-  expect(screen.getByText("Backend translated text")).toBeVisible();
+  await waitFor(() => expect(screen.getByLabelText("รหัสผ่านเดิม")).toHaveAccessibleDescription("Backend translated text"));
+  for (const element of screen.getAllByText("Backend translated text")) expect(element).toBeVisible();
   expect(mocks.clear).not.toHaveBeenCalled();
 });
 

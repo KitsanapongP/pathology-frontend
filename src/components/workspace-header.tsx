@@ -6,6 +6,7 @@ import LogoutButton from "./logout-button";
 import { usePortalLanguage } from "./portal-preferences";
 import PortalFontControl from "./portal-font-control";
 import PortalLanguageControl from "./portal-language-control";
+import PortalIcon from "./portal-icon";
 
 export default function WorkspaceHeader() {
   const { t } = usePortalLanguage();
@@ -15,7 +16,10 @@ export default function WorkspaceHeader() {
       <div className="portal-preferences">
         <PortalFontControl />
         <PortalLanguageControl />
-        <LogoutButton className="portal-signout" />
+        <div className="portal-account-actions">
+          <Link href="/portal/profile" className="portal-profile-link" aria-label={t("โปรไฟล์ของฉัน")} title={t("โปรไฟล์ของฉัน")}><PortalIcon name="user" /></Link>
+          <LogoutButton className="portal-signout" />
+        </div>
       </div>
     </div>
   </header>;

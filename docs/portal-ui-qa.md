@@ -6,6 +6,16 @@
   discovery. A sole or remembered hospital still supplies `tenant_code`; unresolved
   hospitals and backend tenant errors use form feedback. No tenant is invented.
 
+- The shared header places an icon-only profile link immediately before sign-out,
+  with a localized accessible name and tooltip. The landing-page button is removed.
+- `/portal/profile` loads and explicitly saves the signed-in account's four
+  editable fields. Synthetic unit/browser checks cover client validation, backend field
+  errors, discard, a new server read after reload, load failure/retry and password
+  change followed by sign-in. Mandatory-password sessions cannot mount the page.
+- Inspected profile layout at 1896×1244, 1280×720 and 390×844 in English at 120%.
+  Desktop forms sit beside each other, mobile forms stack, the breadcrumb uses
+  the shared typography and no document-wide horizontal overflow was found.
+  Preview shows disabled forms and makes no service calls.
 - Login and password change share the portal language switch and stored language.
   Authentication keeps the default text size; portal Aa presets still persist.
   Browser checks cover keyboard switching, reload, module navigation, logout,
@@ -18,8 +28,9 @@
   labels wrap within cards and tables scroll within panels. No document overflow
   was found in the checked views. The examination route still omits the shared
   header, including its trailing-slash URL; no pedal/STT behavior was changed.
-- Lint, TypeScript, 25 Node examination tests, 69 unit tests and the 17 selected
-  login/password/language browser checks plus 7 demo checks passed. Browser tests use synthetic
+- Lint, TypeScript, 25 Node examination tests, 74 unit tests and all 30 API-mode
+  browser checks plus 8 demo checks passed. Demo checks cover the read-only
+  profile as well as the existing shortcuts. Browser tests use synthetic
   API responses; live backend translation and CORS still need integration QA.
 - Production builds succeeded on retry. The installed Next.js 16.4.2 build emits
   a security upgrade warning and can initially exit with `SecurityFatalError`;

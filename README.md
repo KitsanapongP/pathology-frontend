@@ -46,7 +46,8 @@ when GitHub `main` is promoted. Its workflow uses a static export with the
 repository base path; normal local development uses `/`.
 
 Modules are `/portal/requests`, `/portal/examinations`, `/portal/matching` and
-`/portal/storage`; the admin dashboard is `/portal/admin`. Real login needs backend
+`/portal/storage`; the admin dashboard is `/portal/admin` and account settings
+are at `/portal/profile`. Real login needs backend
 connectivity and a test account. Skip-login preview does not create auth tokens.
 
 The campus background and slide-tray PNGs were generated with ImageGen; container

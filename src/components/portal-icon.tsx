@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 const paths = {
+  user: "M20 21v-2a7 7 0 0 0-14 0v2M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
   location: "M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Zm-5 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
   printer: "M6 9V2h12v7M6 18H3V9h18v9h-3M6 14h12v8H6v-8ZM17 11h1",
   home: "m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9",

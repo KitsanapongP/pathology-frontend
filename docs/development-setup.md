@@ -82,8 +82,9 @@ opens the GitLab `dev` -> `main` MR for senior review. Never merge either `main`
 branch automatically. A request to leave work uncommitted also means no push or
 early batch PR.
 
-Use descriptive messages such as `[FE][Task 5] Add profile editing`. If either
-remote has independent changes, reconcile them while preserving history before
+Use descriptive subjects such as `[FE] Add profile editing`, without task numbers
+or `[Task ...]` markers. If either remote has independent changes, reconcile
+them while preserving history before
 retrying; never force sync or independently squash the same work on each service.
 
 For a new system/module, broad refactor or changes needing coordinated integration

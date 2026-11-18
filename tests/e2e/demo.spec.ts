@@ -70,3 +70,20 @@ test("real password restrictions remain enforced with skip buttons enabled", asy
   await page.goto("/portal");
   await expect(page).toHaveURL("/change-password");
 });
+
+test("profile preview stays read-only and never calls the service", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "ข้ามการเข้าสู่ระบบ Student / Professor", exact: true }).click();
+  await expect(page).toHaveURL("/portal");
+  let calls = 0;
+  await page.route("**/v1/**", route => { calls++; return route.abort(); });
+  await page.getByRole("link", { name: "โปรไฟล์ของฉัน", exact: true }).click();
+  await expect(page).toHaveURL("/portal/profile");
+  await expect(page.getByRole("note")).toHaveText("โปรไฟล์ใช้ได้เมื่อเข้าสู่ระบบด้วยบัญชีจริง โหมดตัวอย่างไม่โหลดหรือแก้ไขข้อมูลบัญชี");
+  await expect(page.getByLabel("ชื่อ", { exact: true })).toBeDisabled();
+  await expect(page.getByLabel("รหัสผ่านเดิม", { exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "บันทึกโปรไฟล์", exact: true })).toBeDisabled();
+  await page.reload();
+  await expect(page.getByLabel("ชื่อ", { exact: true })).toBeDisabled();
+  expect(calls).toBe(0);
+});

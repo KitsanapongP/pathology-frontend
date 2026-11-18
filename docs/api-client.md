@@ -98,6 +98,28 @@ Logout clears local tokens even if the endpoint fails. Backend has no access-tok
 blocklist: an issued token may remain valid until expiry (up to five minutes).
 Backend authorization is required independently of frontend guards.
 
+## My profile
+
+`/portal/profile` is linked by an icon immediately beside sign-out in the shared
+portal header, and from the administration account menu. The icon has a localized
+accessible name and tooltip; the landing page has no separate profile button.
+`GET /v1/users/me` returns `user_id`, `username`, `first_name`, `last_name`,
+`email`, optional/nullable `phone_number`, `status`, `tenant_id`,
+`must_change_password` and Unix-seconds `created_at`.
+`PUT /v1/users/me` sends only `{ first_name, last_name, email, phone_number }`.
+Names are required and at most 255 Unicode characters; email is required and
+phone is optional, digits only, up to 20 digits. Empty phone is sent as `""`.
+Username, status and account creation date are read-only. Backend field errors
+use canonical names and remain untranslated. Only an explicit save writes changes;
+discard restores the last loaded/saved values. Reload fetches the server again.
+
+The profile reuses `ChangePasswordForm` with `purpose="profile"`, including the
+all-device sign-out consequence, old/new passwords, confirmation and the existing
+session-clearing/login-notice flow. Profile save and password change disable each
+other while pending. Mandatory-password sessions still cannot open this page.
+Demo shortcuts show disabled forms without reading or writing service data;
+no profile or password values are persisted in browser storage.
+
 ## Backend handoff
 
 Ask backend to allow the exact frontend origins in `APP AllowOrigins`, including
