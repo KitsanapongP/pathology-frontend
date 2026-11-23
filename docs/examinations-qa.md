@@ -233,3 +233,13 @@ Removed the lookup card's 400px cap. At 1896×1244 the card starts at x=32 and u
 - PortalFrame now removes trailing slashes before the exact route comparison. Five regression cases cover both examination forms and unrelated portal routes. All 22 unit tests pass; TypeScript and changed-file ESLint are checked before publication. Production build/deployment verification is recorded after GitHub Actions completes; do not infer live success from a push alone.
 
 - Live verification completed: GitHub Actions run 42463759910 built and deployed da56682 successfully. Reloading the exact published trailing-slash URL now returns portal-frame--station with zero shared headers. Opened synthetic case 0038 and inspected the record screen: patient/report/Biopsy columns, waveform, timer, rail and Aa render correctly at the browser's 1280x720 viewport. No text/audio was entered and no report was completed or confirmed. This successful Linux CI build does not resolve the separately documented Windows CSS-worker startup issue.
+
+## Recording reading layout — 23 November 2026
+
+- Checked synthetic case 0038 in isolated Chrome. At 1896×1244 the patient, report and Biopsy cards measure 350/1036/398px. The recording card is 820px high, its text column including line numbers is 672px wide at 100% Aa, and the development simulator remains an overlay.
+- At 1280×720 the cards measure 280/588/300px. The command rail measures 146px at 100% Aa and 152px at 120%. The viewport stays 1280×720 at both settings. The compact identity header keeps HN and examination accession above the scrolling notes.
+- Checked a synthetic line at 18px and verified the short right test-key tap moves selection off the explicit completion target without unlocking another Part. No real microphone, pedal hardware, user drafts or report confirmation were exercised.
+
+- Verified in isolated Chrome that Noto Sans Thai Looped loads for the transcript and patient clinical text in record and review. The lookup card, patient identifiers, Biopsy, command rail, portal landing and request directory retain the base font. Checked 1896×1244 (including simulator) and 1280×720 at 100%/120% without viewport overflow. The review check completed one Part in a disposable synthetic draft; no report was confirmed.
+
+- The centered card group measures 1680px with 108px side margins at 1896×1244 in recording and review. Opening the simulator leaves those measurements unchanged. At 1280×720 with 100% and 120% Aa, the card group keeps 32px margins and a 588px report card. The command rail spans the viewport at both sizes, and the search field maintains its horizontal position when opening a case. Checks used an isolated synthetic draft.

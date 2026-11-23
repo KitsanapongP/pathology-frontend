@@ -22,7 +22,7 @@ import { useExaminationFocus, type FootTarget } from "@/hooks/use-examination-fo
 const requests = examinationRequests();
 type Notice = { text: string; tone: "error" | "success" | "info"; retry?: "save" | "playback" };
 
-export default function ExaminationWorkflow() {
+export default function ExaminationWorkflow({ readingFontClassName = "" }: { readingFontClassName?: string }) {
   const router = useRouter();
   const [screen, setScreen] = useState<ExaminationScreen>("standby");
   const [query, setQuery] = useState("");
@@ -515,7 +515,7 @@ export default function ExaminationWorkflow() {
     <button type="button" aria-label="ปิดข้อความแจ้งเตือน" onClick={() => setNotice("")}><PortalIcon name="close" /></button>
   </div>;
   const reportLines = (item: ExaminationPart) => <div className="station-report-lines">{item.lines.map((line, index) => <div key={line.id} className={newLineIds.includes(line.id) ? "station-new-line" : undefined}><span>{String(index + 1).padStart(2, "0")}</span><p>{line.text}</p></div>)}</div>;
-  return <div className="station-shell">
+  return <div className={`station-shell ${readingFontClassName}`}>
     <main className={`station-main ${screen === "standby" || screen === "case" ? "is-lookup" : `is-examination ${screen === "record" ? "is-recording" : "is-reviewing"}`}`}>
       {(screen === "standby" || screen === "case") && <div className={`station-lookup ${screen === "case" ? "has-case" : ""}`}>
       <section className="station-standby">

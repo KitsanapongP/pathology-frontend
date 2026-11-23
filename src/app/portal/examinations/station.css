@@ -356,10 +356,33 @@
 @media(max-width:760px){.portal-frame--station .station-main.is-lookup{padding-inline:16px}.portal-frame--station .station-lookup>.station-case-context{height:480px}}
 @media(max-width:760px){.station-font-setting{right:16px;bottom:52px}.portal-frame--station .station-shortcuts{justify-content:flex-start}}
 
-/* Reading hierarchy: broad clinical context, primary transcript, shared reference. */
-.portal-frame--station .station-main.is-examination{grid-template-columns:minmax(280px,28fr) minmax(0,44fr) minmax(300px,28fr);gap:24px;padding:28px 32px;align-items:stretch}
-.portal-frame--station .station-main.is-recording>.station-report-workspace{height:min(480px,100%);align-self:start}
+/* Bound the sidebars and the text measure separately so the transcript stays central. */
+.portal-frame--station .station-main.is-examination{
+  --station-card-gutter:32px;
+  --station-reading-width:min(42rem,700px);
+  max-width:calc(1680px + 2 * var(--station-card-gutter));
+  grid-template-columns:clamp(280px,18.5vw,350px) minmax(0,1fr) clamp(300px,21vw,400px);
+  gap:24px;
+  padding:28px var(--station-card-gutter);
+  align-items:stretch;
+}
+.portal-frame--station .station-main.is-recording>.station-report-workspace{
+  height:min(100%,clamp(480px,66svh,820px));
+  align-self:start;
+}
 .portal-frame--station .station-main.is-reviewing>.station-report-workspace{height:100%}
+.station-main.is-examination .station-part-strip{
+  padding-inline:max(20px,calc((100% - var(--station-reading-width)) / 2));
+}
+.station-main.is-examination .station-document>:is(.station-empty-document,.station-report-lines,.station-review-part){
+  max-inline-size:var(--station-reading-width);
+  margin-inline:auto;
+}
+.station-main.is-examination .station-document .station-report-lines p,
+.station-main.is-examination .station-context-body>.station-context-section :is(dd,.station-context-prose){
+  font-family:var(--font-examination-reading,var(--font-sans));
+}
+.station-main.is-examination .station-empty-document{color:var(--muted)}
 .portal-frame--station .station-command-rail{padding-top:14px;padding-bottom:12px}
 .portal-frame--station .station-report-heading{padding:18px 22px}
 .station-report-title{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -371,6 +394,12 @@
 .portal-frame--station .station-context-demographics{gap:10px 22px}
 .portal-frame--station .station-context-demographics dd{font-size:1rem;line-height:1.5}
 .station-context-accession{flex-basis:100%}
+.station-main.is-examination .station-context-identity{padding:14px 16px 12px}
+.station-main.is-examination .station-context-identity h2{margin-bottom:4px}
+.station-main.is-examination .station-context-fixture{margin-block:0 6px}
+.station-main.is-examination .station-context-demographics{gap:6px 14px}
+.station-main.is-examination .station-context-demographics dd{line-height:1.35;overflow-wrap:anywhere}
+.station-main.is-examination .station-context-body{padding-inline:16px}
 .portal-frame--station .station-context-body{padding:0 20px 20px}
 .portal-frame--station .station-context-section{padding:18px 0}
 .portal-frame--station .station-context-section h3{font-size:1rem;margin-bottom:12px}
@@ -378,10 +407,11 @@
 .portal-frame--station .station-context-section dt{font-size:.875rem;line-height:1.5}
 .station-context-reference{padding:18px 0 0}
 .station-context-reference>summary{cursor:pointer;font-size:.9375rem;font-weight:500;color:var(--muted)}
-.portal-frame--station .station-specimen-template>header{padding:18px 20px}
-.portal-frame--station .station-template-body{padding:0 20px 16px;font-size:.9375rem;line-height:1.75}
-.portal-frame--station .station-template-section{padding:16px 0}
-.portal-frame--station .station-template-section h3{font-size:.9375rem;margin-bottom:10px}
+.portal-frame--station .station-specimen-template>header{padding:14px 16px}
+.portal-frame--station .station-template-body{padding:0 16px 14px;font-size:1rem;line-height:1.55}
+.portal-frame--station .station-template-section{padding:12px 0}
+.portal-frame--station .station-template-section h3{font-size:.9375rem;margin-bottom:6px}
+.portal-frame--station .station-template-section-content{padding-left:16px}
 .portal-frame--station .station-template-choices{display:inline;line-height:inherit}
 .portal-frame--station .station-template-choice{display:inline-block;white-space:nowrap;padding:0 2px;margin:0;border:0;border-radius:2px;background:linear-gradient(transparent 60%,#e6edf6 60%);color:#344e70;line-height:inherit}
 .station-template-separator{color:#8b9ba8;white-space:normal}
@@ -390,5 +420,20 @@
 .portal-frame--station .station-help-corner{padding:8px 12px;font-size:.9375rem}
 .portal-frame--station .station-font-setting{bottom:12px}
 .portal-frame--station .station-dev-tools{bottom:16px}
+@media(min-width:1101px) and (max-height:800px){
+  .portal-frame--station .station-main.is-recording>.station-report-workspace{height:100%}
+  .portal-frame--station .station-main.is-recording~.station-command-rail{padding-block:10px 8px}
+  .station-main.is-recording~.station-command-rail .station-rail-activate{margin-bottom:6px}
+  .station-main.is-recording~.station-command-rail .station-shortcuts{padding-top:5px}
+  .portal-frame--station .station-main.is-recording~.station-command-rail .station-command-items>button{
+    flex-direction:row;
+    min-width:0;
+    min-height:68px;
+    padding:8px;
+    font-size:1rem;
+  }
+  .station-main.is-recording~.station-command-rail .station-command-items>button>svg{flex:none}
+  .station-main.is-recording~.station-command-rail .station-command-items>button>span{min-width:0;overflow-wrap:anywhere}
+}
 @media(max-width:1100px){.portal-frame--station .station-main.is-examination{grid-template-columns:320px minmax(0,1fr);padding:24px}.portal-frame--station .station-main.is-recording>.station-report-workspace{height:440px}}
-@media(max-width:760px){.portal-frame--station .station-main.is-examination{grid-template-columns:minmax(0,1fr);padding:24px 16px;gap:24px}.portal-frame--station .station-main.is-recording>.station-report-workspace{height:380px}.portal-frame--station .station-main.is-reviewing>.station-report-workspace{height:520px}.portal-frame--station .station-command-rail{padding-bottom:68px}.portal-frame--station .station-font-setting{bottom:52px}}
+@media(max-width:760px){.portal-frame--station .station-main.is-examination{grid-template-columns:minmax(0,1fr);padding:24px 16px;gap:24px}.portal-frame--station .station-main.is-recording>.station-report-workspace{height:380px}.portal-frame--station .station-main.is-reviewing>.station-report-workspace{height:520px}.portal-frame--station .station-template-section-content{padding-left:0}.portal-frame--station .station-command-rail{padding-bottom:68px}.portal-frame--station .station-font-setting{bottom:52px}}
