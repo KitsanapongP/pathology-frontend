@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { seedSession, success, tokenData } from "./auth-fixture";
+import { openAccountMenu, seedSession, success, tokenData } from "./auth-fixture";
 
 test("language persists through login, module navigation, reload and logout", async ({ page }) => {
   await page.route("http://api.e2e.test/v1/auth/tenants", route => route.fulfill({ json: success([{ code: "synthetic-hospital", name: "Synthetic Hospital" }]) }));
@@ -38,6 +38,7 @@ test("language persists through login, module navigation, reload and logout", as
   await expect(page.getByRole("switch")).toHaveAttribute("aria-checked", "true");
   await expect(page.getByRole("button", { name: "Large text", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("html")).toHaveCSS("font-size", "19.2px");
+  await openAccountMenu(page, "en");
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page).toHaveURL("/");
   await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();

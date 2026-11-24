@@ -100,9 +100,12 @@ Backend authorization is required independently of frontend guards.
 
 ## My profile
 
-`/portal/profile` is linked by an icon immediately beside sign-out in the shared
-portal header, and from the administration account menu. The icon has a localized
-accessible name and tooltip; the landing page has no separate profile button.
+`/portal/profile` is linked from `PortalAccountMenu` in the shared portal header.
+The account dropdown also opens the single shared settings dialog and signs out;
+administration does not duplicate account controls or show notifications.
+The menu supports keyboard focus, Escape and dismissal outside the dropdown.
+The header makes no extra identity requests and uses a generic account label for
+real sessions; it never infers their names or roles from the preview Admin fixture.
 `GET /v1/users/me` returns `user_id`, `username`, `first_name`, `last_name`,
 `email`, optional/nullable `phone_number`, `status`, `tenant_id`,
 `must_change_password` and Unix-seconds `created_at`.
@@ -119,6 +122,33 @@ session-clearing/login-notice flow. Profile save and password change disable eac
 other while pending. Mandatory-password sessions still cannot open this page.
 Demo shortcuts show disabled forms without reading or writing service data;
 no profile or password values are persisted in browser storage.
+
+## Hospital user directory and permissions
+
+`/portal/admin/users` reads `GET /v1/users?page=&size=` or
+`GET /v1/users/search?q=&page=&size=` through `portalApi.paginated`.
+Rows use the same `UserResponse` contract as the profile. Pagination returns
+`total_records`, `total_pages`, `current_page`, `page_size`; requests use `size`.
+Search is debounced 350 ms, resets to page 1 and cancels superseded reads.
+Search, page and page size live in the URL for reload and browser history.
+The directory links from portal home and the administration dashboard. All
+`/portal/admin` routes share `AdminShell`, including persistent desktop navigation
+and a mobile menu dialog; the directory does not mount another header or sidebar.
+Administration request, storage and log destinations retain local dashboard
+fixtures and do not use the portal user API. Create,
+edit, reset and delete are separate work and have no placeholder controls here.
+Preview makes no directory HTTP calls.
+
+The updated backend auth document confirms portal RBAC is pending: authenticated
+hospital users currently access all hospital pages, scoped to their tenant by
+the backend. `canPortal` in `src/lib/portal-permissions.ts` is the single UI
+permission policy; it grants `users.read` only after normal authentication.
+Do not infer roles or token claims from the document's illustrative examples.
+Keep authentication and mandatory-password guards independent of that policy.
+Directory HTTP 403 renders `PortalForbidden`, preserving backend feedback and
+the session; it does not trigger refresh or logout. HTTP 401 retains the shared
+refresh/retry behavior. Superadmin uses separate accounts, tokens and a service
+on port 9200 over VPN; never send portal tokens to that service.
 
 ## Backend handoff
 

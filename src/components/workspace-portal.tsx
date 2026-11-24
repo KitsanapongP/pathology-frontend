@@ -2,7 +2,11 @@
 import { PortalText, usePortalLanguage } from './portal-preferences';
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import Link from "next/link";
+import { useRef, useState, useSyncExternalStore } from "react";
+import { portalSession } from "@/lib/portal-api";
+import { canPortal } from "@/lib/portal-permissions";
+import type { SessionState } from "@/lib/session-manager";
 import PortalIcon, { type PortalIconName } from "./portal-icon";
 
 const modules: { number: string; title: string; lines: string[]; icon: PortalIconName; color: string }[] = [
@@ -15,6 +19,7 @@ const modules: { number: string; title: string; lines: string[]; icon: PortalIco
 export default function WorkspacePortal() {
   const { t } = usePortalLanguage();
   const router = useRouter();
+  const session = useSyncExternalStore<SessionState>(portalSession.subscribe, portalSession.getSnapshot, () => "checking");
   const [selected, setSelected] = useState<(typeof modules)[number] | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -46,6 +51,7 @@ export default function WorkspacePortal() {
       <main className="workspace-main flex min-h-[calc(100svh-84px)] items-center justify-center px-5 py-12 sm:px-8 lg:py-20">
         <div className="w-full max-w-[1104px]">
           <h1 className="sr-only"><PortalText>ระบบงานพยาธิวิทยา</PortalText></h1>
+          {canPortal(session, "users.read") && <div className="mb-5 flex justify-end"><Link href="/portal/admin/users" className="intake-button flex items-center gap-2"><PortalIcon name="users" /><PortalText>จัดการผู้ใช้</PortalText></Link></div>}
           <section aria-label={t("เมนูการใช้งานระบบพยาธิวิทยา")} className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:gap-7">
             {modules.map(module => <button type="button" key={module.number} onClick={() => openModule(module)} className={`workspace-module module-${module.color} group relative grid min-h-[220px] grid-cols-[128px_minmax(0,1fr)_56px] items-center gap-6 rounded-[22px] border border-white/85 bg-white/95 px-9 py-9 text-left shadow-[0_12px_32px_rgba(47,76,112,0.06)] transition duration-200 hover:-translate-y-1 hover:bg-white hover:shadow-[0_18px_40px_rgba(47,76,112,0.12)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600`}>
               <span className="workspace-module-number absolute left-7 top-6 text-lg font-semibold"><PortalText>{module.number}</PortalText></span>

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { seedSession, success } from "./auth-fixture";
+import { openAccountMenu, seedSession, success } from "./auth-fixture";
 
 const initial = { user_id: "synthetic-profile-id", username: "synthetic-user", first_name: "Synthetic", last_name: "User", email: "synthetic@example.invalid", phone_number: "000123", status: "active", tenant_id: "synthetic-tenant", must_change_password: false, created_at: 1_700_000_000 };
 
@@ -18,6 +18,7 @@ test("profile edits persist through a new read and reload, with backend field fe
     return route.fulfill({ json: success(null) });
   });
   await page.goto("/portal");
+  await openAccountMenu(page);
   await page.getByRole("link", { name: "โปรไฟล์ของฉัน", exact: true }).click();
   await expect(page).toHaveURL("/portal/profile");
   await expect(page.getByLabel("ชื่อ", { exact: true })).toHaveValue("Synthetic");
@@ -99,10 +100,9 @@ for (const viewport of [{ width: 1896, height: 1244 }, { width: 1280, height: 72
     await page.setViewportSize(viewport);
     await page.route("http://api.e2e.test/v1/users/me", route => route.fulfill({ json: success(initial) }));
     await page.goto("/portal/admin");
+    await openAccountMenu(page);
     const profileLink = page.locator(".portal-global-header").getByRole("link", { name: "โปรไฟล์ของฉัน", exact: true });
-    await expect(profileLink).toHaveText("");
-    await expect(profileLink).toHaveAttribute("title", "โปรไฟล์ของฉัน");
-    expect(await profileLink.evaluate(link => link.nextElementSibling?.tagName)).toBe("BUTTON");
+    await expect(profileLink).toHaveText("โปรไฟล์ของฉัน");
     await profileLink.click();
     await page.getByRole("switch").click();
     await page.getByRole("button", { name: "Large text", exact: true }).click();

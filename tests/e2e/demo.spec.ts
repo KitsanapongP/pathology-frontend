@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { success, tokenData } from "./auth-fixture";
+import { openAccountMenu, success, tokenData } from "./auth-fixture";
 
 for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 1244 }, { width: 390, height: 844 }]) {
   test(`demo role buttons fit ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
@@ -33,10 +33,16 @@ for (const role of ["Student / Professor", "Admin"]) {
     await page.getByRole("button", { name: `ข้ามการเข้าสู่ระบบ ${role}`, exact: true }).click();
     const destination = role === "Admin" ? "/portal/admin" : "/portal";
     await expect(page).toHaveURL(destination);
-    await expect(page.getByRole("button", { name: "ออกจากระบบ", exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "เมนูบัญชีผู้ใช้", exact: true })).toBeVisible();
     await page.reload();
     await expect(page).toHaveURL(destination);
-    await page.getByRole("button", { name: "ออกจากระบบ", exact: true }).first().click();
+    if (role === "Admin") {
+      await page.getByRole("link", { name: "จัดการผู้ใช้", exact: true }).click();
+      await expect(page).toHaveURL("/portal/admin/users");
+      await expect(page.getByRole("note")).toContainText("โหมดตัวอย่างไม่โหลดข้อมูลบัญชี");
+    }
+    await openAccountMenu(page);
+    await page.getByRole("button", { name: "ออกจากระบบ", exact: true }).click();
     await expect(page).toHaveURL("/");
     await page.goto(destination);
     await expect(page).toHaveURL("/");
@@ -77,6 +83,7 @@ test("profile preview stays read-only and never calls the service", async ({ pag
   await expect(page).toHaveURL("/portal");
   let calls = 0;
   await page.route("**/v1/**", route => { calls++; return route.abort(); });
+  await openAccountMenu(page);
   await page.getByRole("link", { name: "โปรไฟล์ของฉัน", exact: true }).click();
   await expect(page).toHaveURL("/portal/profile");
   await expect(page.getByRole("note")).toHaveText("โปรไฟล์ใช้ได้เมื่อเข้าสู่ระบบด้วยบัญชีจริง โหมดตัวอย่างไม่โหลดหรือแก้ไขข้อมูลบัญชี");

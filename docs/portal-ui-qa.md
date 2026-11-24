@@ -1,13 +1,49 @@
 # Portal UI QA
 
+## Administration navigation and layout — 24 November 2026
+
+- Thai navigation and headings use แดชบอร์ด. `AdminShell` persists
+  across dashboard, users, requests, storage and logs; main navigation opens
+  routes rather than overlay dialogs and marks the active link with `aria-current`.
+- User, request, storage and log pages omit breadcrumbs and keep aligned heading
+  spacing below the shared header. The shared settings icon uses a symmetric gear
+  outline and centered hole in the account dropdown and sidebar.
+- Browser checks cover navigation, reload, back and active links at 1896×1244,
+  1280×720 and 390×844 in English at 120%. Desktop retains the left sidebar;
+  the mobile native menu closes on selection or Escape and restores focus.
+- Visual checks cover the shared gutters, readable user/request/storage tables
+  and service/log panels. Tables scroll inside their cards; mobile service status
+  and log filters remain inside the viewport. Settings and row details retain
+  their dialogs. Request/storage/log data remains the existing local preview.
+- Local dev CSS was checked after preserving and regenerating the stale dev
+  cache; production browser checks alone did not validate that cache.
+
+## Current user directory checks — 24 November 2026
+
+- Portal home and administration user actions open `/portal/admin/users`.
+  Authenticated hospital users pass the central permission policy while RBAC is
+  pending; anonymous and mandatory-password sessions cannot load directory data.
+- Synthetic browser checks cover list/search endpoints, debounce, focus retention,
+  stale-response cancellation, page/size changes, URL history/reload, empty search,
+  server failure/retry and 403 without token refresh or session clearing.
+- Inspected English at 120% at 1896×1244, 1280×720 and 390×844. The table scrolls
+  independently on mobile; pagination stacks with clearly disabled actions.
+  Account dates use the selected locale and Asia/Bangkok.
+- Preview explains that a real account is required and makes no directory HTTP
+  calls. Create/edit/reset/delete controls belong to the subsequent tasks.
+- Read-only VPN checks reached Swagger and portal health (200). Authenticated
+  directory behavior is verified with synthetic responses, not a live account.
+
 ## Current language and layout checks — 18 November 2026
 
 - Hospital selection is temporarily hidden on login, including pending and failed
   discovery. A sole or remembered hospital still supplies `tenant_code`; unresolved
   hospitals and backend tenant errors use form feedback. No tenant is invented.
 
-- The shared header places an icon-only profile link immediately before sign-out,
-  with a localized accessible name and tooltip. The landing-page button is removed.
+- The shared header now uses one account dropdown for profile, settings and
+  sign-out, superseding the earlier profile icon. Administration no longer has a
+  second account control or notifications. Dropdown checks cover keyboard/Tab,
+  Escape, outside dismissal and settings focus restoration at 1896, 781 and 390px.
 - `/portal/profile` loads and explicitly saves the signed-in account's four
   editable fields. Synthetic unit/browser checks cover client validation, backend field
   errors, discard, a new server read after reload, load failure/retry and password

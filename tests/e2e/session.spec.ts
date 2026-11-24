@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { seedSession, success, tokenData } from "./auth-fixture";
+import { openAccountMenu, seedSession, success, tokenData } from "./auth-fixture";
 
 test("anonymous visitors cannot mount portal modules", async ({ page }) => {
   await page.goto("/portal/admin");
@@ -29,7 +29,8 @@ test("session survives more than five minutes and logout prevents back/reload ac
   await page.getByRole("button", { name: /รับใบส่งตรวจ/ }).click();
   await expect(page).toHaveURL("/portal/requests");
   const revoked = page.waitForRequest("http://api.e2e.test/v1/auth/logout");
-  await page.getByRole("button", { name: "ออกจากระบบ", exact: true }).first().click();
+  await openAccountMenu(page);
+  await page.getByRole("button", { name: "ออกจากระบบ", exact: true }).click();
   await revoked;
   await expect(page).toHaveURL("/");
   expect(await page.evaluate(() => sessionStorage.getItem("pathology:session:v1"))).toBeNull();
