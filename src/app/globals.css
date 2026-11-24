@@ -98,6 +98,20 @@ button:not(:disabled), select {
 .admin-section { min-width: 0; width: 100%; padding: 0 24px 32px; }
 .admin-section > .profile-heading { margin-top: 28px; }
 .users-content > .profile-heading { margin-top: 0; }
+.users-title-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+.users-title-row .profile-heading { margin: 0; }
+.users-write-notice { margin-bottom: 20px; }
+.admin-user-dialog { width: calc(100% - 32px); max-width: 800px; max-height: calc(100svh - 48px); margin: auto; border: 1px solid #dce6f3; border-radius: 16px; padding: 0; color: #24416b; background: white; box-shadow: 0 20px 60px #102b5033; }
+.admin-user-dialog::backdrop { background: #102b5059; backdrop-filter: blur(4px); }
+.admin-user-dialog-heading { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #e7edf5; background: white; }
+.admin-user-dialog-heading h2 { font-size: 1.375rem; font-weight: 700; }
+.admin-user-dialog-body { padding: 24px; }
+.admin-user-dialog-body > p, .admin-user-password-note { margin-bottom: 20px; font-size: 1rem; line-height: 1.6; }
+.admin-user-dialog .profile-field select { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid #bdcfe4; border-radius: 8px; background: white; font-size: 1rem; }
+.admin-user-dialog :focus-visible { outline: 2px solid #2879d5; outline-offset: 3px; }
+.admin-user-dialog .profile-field input[aria-invalid=true], .admin-user-dialog .profile-field select[aria-invalid=true] { border-color: #b42318; }
+.admin-user-dialog button:disabled { opacity: .5; cursor: default; }
+.admin-user-dialog .profile-actions { margin-top: 20px; }
 .admin-log-panels { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
 .admin-log-panels > .portal-panel { min-width: 0; }
 .admin-log-panels .portal-panel-heading { flex-wrap: wrap; gap: 12px; }
@@ -247,14 +261,14 @@ button:not(:disabled), select {
 .users-search-input input { min-width: 0; width: 100%; padding: 12px 0; outline: none; font-size: 1rem; }
 .profile-panel.users-panel { padding: 0; overflow: hidden; }
 .users-total { padding: 20px 24px; font-size: 1rem; font-weight: 600; }
-.users-table { width: 100%; min-width: 900px; table-layout: fixed; }
+.users-table { width: 100%; min-width: 1080px; table-layout: fixed; }
 .users-panel .users-table th, .users-panel .users-table td { font-size: 1rem; padding: 16px 24px; }
 .users-panel .users-table th { white-space: normal; }
 .users-table td { overflow-wrap: anywhere; max-width: 420px; }
-.users-table th:nth-child(1), .users-table th:nth-child(5) { width: 18%; }
-.users-table th:nth-child(2) { width: 20%; }
-.users-table th:nth-child(3) { width: 28%; }
-.users-table th:nth-child(4) { width: 16%; }
+.users-table th:nth-child(1), .users-table th:nth-child(5) { width: 16%; }
+.users-table th:nth-child(2) { width: 18%; }
+.users-table th:nth-child(3) { width: 24%; }
+.users-table th:nth-child(4), .users-table th:nth-child(6) { width: 13%; }
 .users-table .portal-badge { font-size: .875rem; white-space: nowrap; }
 .users-feedback { padding: 24px; }
 .users-feedback p { margin-bottom: 16px; }

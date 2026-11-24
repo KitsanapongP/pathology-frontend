@@ -135,20 +135,46 @@ The directory links from portal home and the administration dashboard. All
 `/portal/admin` routes share `AdminShell`, including persistent desktop navigation
 and a mobile menu dialog; the directory does not mount another header or sidebar.
 Administration request, storage and log destinations retain local dashboard
-fixtures and do not use the portal user API. Create,
-edit, reset and delete are separate work and have no placeholder controls here.
-Preview makes no directory HTTP calls.
+fixtures and do not use the portal user API. Reset and delete remain separate
+work and have no placeholder controls here. Preview makes no directory HTTP calls.
 
 The updated backend auth document confirms portal RBAC is pending: authenticated
 hospital users currently access all hospital pages, scoped to their tenant by
 the backend. `canPortal` in `src/lib/portal-permissions.ts` is the single UI
-permission policy; it grants `users.read` only after normal authentication.
+permission policy; it grants `users.read`, `users.create` and `users.update` only
+after normal authentication.
 Do not infer roles or token claims from the document's illustrative examples.
 Keep authentication and mandatory-password guards independent of that policy.
 Directory HTTP 403 renders `PortalForbidden`, preserving backend feedback and
 the session; it does not trigger refresh or logout. HTTP 401 retains the shared
 refresh/retry behavior. Superadmin uses separate accounts, tokens and a service
 on port 9200 over VPN; never send portal tokens to that service.
+
+## Create and edit hospital users
+
+The directory opens `AdminUserDialog` for create or edit while preserving its
+current `q`, `page` and `size`. Edit first reads `GET /v1/users/{user_id}`; cancel
+discards the local buffer. Successful writes refresh the current directory query.
+
+- Create: `POST /v1/users` sends `username`, `email`, `first_name`, `last_name`,
+  `phone_number`, `status`, `password`. The initial password requires at least
+  eight Unicode characters and local confirmation; new users must change it at
+  first login. Confirmation is never sent to the service.
+- Edit: `PUT /v1/users/{user_id}` sends the same six account fields without a
+  password. Resetting a password remains a separate endpoint/task.
+- Username has 3–100 Unicode characters; names have 1–255, email is required and
+  phone is optional digits up to 20. Text fields trim whitespace, passwords do not.
+  Empty phone is `""`. Status values stay `active`/`inactive` in both languages.
+  Tenant is determined by the backend; no tenant or role fields are sent.
+- Canonical backend field errors render unchanged. Username/email duplicate codes
+  attach the backend message to the corresponding field if field errors are
+  absent; combined field errors remain intact. Other codes use general feedback.
+  Missing users stop editing; forbidden reads/writes show the shared denied view.
+- Reads are abortable and bounded to 15 seconds; writes to 30. Pending writes
+  prevent repeated submit, cancel and Escape. A network/timeout error cannot prove
+  that the server did not save, so feedback asks the user to check the directory.
+  Closing or successful save discards the form buffer; passwords never enter URL,
+  browser storage or logs. Preview can open a disabled create form with no HTTP.
 
 ## Backend handoff
 

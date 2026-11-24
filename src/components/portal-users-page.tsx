@@ -13,6 +13,7 @@ import PortalDate from "./portal-date";
 import PortalForbidden from "./portal-forbidden";
 import PortalIcon from "./portal-icon";
 import { PortalText, usePortalLanguage } from "./portal-preferences";
+import AdminUserDialog from "./admin-user-dialog";
 
 const sizes = [10, 20, 50, 100];
 
@@ -26,6 +27,14 @@ export default function PortalUsersPage() {
   const rawPage = Number(params.get("page") ?? 1);
   const page = Number.isSafeInteger(rawPage) && rawPage > 0 ? rawPage : 1;
   const size = sizes.includes(Number(params.get("size"))) ? Number(params.get("size")) : 20;
+  const [editor, setEditor] = useState<{ userId?: string } | null>(null);
+  const [revision, setRevision] = useState(0);
+  const [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(""), 6000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
   function navigate(next: { q?: string; page?: number; size?: number }) {
     const query = new URLSearchParams({ page: String(next.page ?? page), size: String(next.size ?? size) });
     const search = next.q ?? q;
@@ -35,11 +44,15 @@ export default function PortalUsersPage() {
   if (!preview && !canPortal(session, "users.read")) return <PortalForbidden />;
   return <main className="portal-main users-main">
     <div className="users-content">
-      <h1 className="profile-heading"><PortalText>จัดการผู้ใช้</PortalText></h1>
+      <div className="users-title-row"><h1 className="profile-heading"><PortalText>จัดการผู้ใช้</PortalText></h1>
+        {(preview || canPortal(session, "users.create")) && <button className="intake-button intake-button-primary" onClick={() => { setNotice(""); setEditor({}); }}><PortalIcon name="users" /><PortalText>สร้างผู้ใช้</PortalText></button>}
+      </div>
+      {notice && <p role="status" className="profile-success users-write-notice"><PortalText>{notice}</PortalText></p>}
       {preview ? <section className="profile-panel"><p role="note"><PortalText>รายการผู้ใช้ใช้ได้เมื่อเข้าสู่ระบบด้วยบัญชีจริง โหมดตัวอย่างไม่โหลดข้อมูลบัญชี</PortalText></p></section> : <>
         <UserSearch query={q} onSearch={value => navigate({ q: value, page: 1 })} />
-        <UsersResult key={`${q}:${page}:${size}`} q={q} page={page} size={size} navigate={navigate} />
+        <UsersResult key={`${q}:${page}:${size}`} q={q} page={page} size={size} navigate={navigate} revision={revision} canEdit={canPortal(session, "users.update")} onEdit={userId => { setNotice(""); setEditor({ userId }); }} />
       </>}
+      {editor && <AdminUserDialog userId={editor.userId} preview={preview} onClose={() => setEditor(null)} onSaved={creating => { setEditor(null); setRevision(value => value + 1); setNotice(creating ? "สร้างผู้ใช้สำเร็จ ผู้ใช้ต้องเปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบครั้งแรก" : "บันทึกผู้ใช้แล้ว"); }} />}
     </div>
   </main>;
 }
@@ -64,7 +77,7 @@ function UserSearch({ query, onSearch }: { query: string; onSearch: (value: stri
   </form>;
 }
 
-function UsersResult({ q, page, size, navigate }: { q: string; page: number; size: number; navigate: (next: { page?: number; size?: number }) => void }) {
+function UsersResult({ q, page, size, navigate, revision, canEdit, onEdit }: { q: string; page: number; size: number; navigate: (next: { page?: number; size?: number }) => void; revision: number; canEdit: boolean; onEdit: (id: string) => void }) {
   const { t } = usePortalLanguage();
   const [result, setResult] = useState<PaginatedResponse<UserProfile> | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -90,7 +103,7 @@ function UsersResult({ q, page, size, navigate }: { q: string; page: number; siz
     }
     void load();
     return () => controller.abort();
-  }, [q, page, size, attempt]);
+  }, [q, page, size, attempt, revision]);
   if (error?.httpStatus === 403) return <PortalForbidden error={error} />;
   const pagination = result?.pagination;
   return <section className="profile-panel users-panel" aria-label={t("รายการผู้ใช้")} aria-busy={loading}>
@@ -100,11 +113,12 @@ function UsersResult({ q, page, size, navigate }: { q: string; page: number; siz
     </div> : result && <>
       <p className="users-total" role="status"><PortalText>ผู้ใช้ทั้งหมด</PortalText>{" "}{pagination!.total_records}{" "}<PortalText>รายการ</PortalText></p>
       {result.data.length ? <div className="portal-table-scroll users-table-scroll" tabIndex={0} role="region" aria-label={t("รายการผู้ใช้")}><table className="portal-table users-table">
-        <thead><tr>{["ชื่อผู้ใช้", "ชื่อ–นามสกุล", "อีเมล", "สถานะบัญชี", "วันที่สร้างบัญชี"].map(label => <th scope="col" key={label}><PortalText>{label}</PortalText></th>)}</tr></thead>
+        <thead><tr>{["ชื่อผู้ใช้", "ชื่อ–นามสกุล", "อีเมล", "สถานะบัญชี", "วันที่สร้างบัญชี"].map(label => <th scope="col" key={label}><PortalText>{label}</PortalText></th>)}{canEdit && <th scope="col"><PortalText>การดำเนินการ</PortalText></th>}</tr></thead>
         <tbody>{result.data.map(user => <tr key={user.user_id}>
           <td>{user.username}</td><td>{user.first_name} {user.last_name}</td><td>{user.email}</td>
           <td><span className={`portal-badge ${user.status === "active" ? "badge-green" : "badge-amber"}`}>{user.status === "active" ? t("ใช้งานอยู่") : user.status === "inactive" ? t("ปิดใช้งาน") : user.status}</span></td>
           <td><PortalDate value={user.created_at * 1000} /></td>
+          {canEdit && <td><button type="button" className="intake-button" aria-label={`${t("แก้ไขผู้ใช้")} ${user.username}`} onClick={() => onEdit(user.user_id)}><PortalIcon name="edit" /><PortalText>แก้ไข</PortalText></button></td>}
         </tr>)}</tbody>
       </table></div> : <p className="users-feedback"><PortalText>{q ? "ไม่พบผู้ใช้ที่ตรงกับการค้นหา" : "ไม่มีผู้ใช้ในหน้านี้"}</PortalText></p>}
     </>}

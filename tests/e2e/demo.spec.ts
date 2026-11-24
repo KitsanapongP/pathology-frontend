@@ -40,6 +40,11 @@ for (const role of ["Student / Professor", "Admin"]) {
       await page.getByRole("link", { name: "จัดการผู้ใช้", exact: true }).click();
       await expect(page).toHaveURL("/portal/admin/users");
       await expect(page.getByRole("note")).toContainText("โหมดตัวอย่างไม่โหลดข้อมูลบัญชี");
+      await page.getByRole("button", { name: "สร้างผู้ใช้", exact: true }).click();
+      const editor = page.getByRole("dialog");
+      await expect(editor.getByLabel("ชื่อผู้ใช้", { exact: true })).toBeDisabled();
+      await expect(editor.getByRole("button", { name: "สร้างผู้ใช้", exact: true })).toBeDisabled();
+      await editor.getByRole("button", { name: "ปิดหน้าต่าง", exact: true }).first().click();
     }
     await openAccountMenu(page);
     await page.getByRole("button", { name: "ออกจากระบบ", exact: true }).click();

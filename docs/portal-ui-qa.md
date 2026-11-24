@@ -30,7 +30,15 @@
   independently on mobile; pagination stacks with clearly disabled actions.
   Account dates use the selected locale and Asia/Bangkok.
 - Preview explains that a real account is required and makes no directory HTTP
-  calls. Create/edit/reset/delete controls belong to the subsequent tasks.
+  calls. It can open the disabled create form; reset/delete remain subsequent work.
+- Create/edit browser checks cover client and combined backend field feedback,
+  exact request bodies, cancellation, repeated-submit prevention, a fresh selected
+  user read, unchanged URL query after save, list refresh, 403/404/read retry and
+  uncertain network failures without a success notice. Unit checks cover Unicode
+  limits, leading-zero phone numbers and password omission on update.
+- Inspected create/edit dialogs in English at 120% at 1896×1244, 1280×720 and
+  390×844. Desktop uses two columns; mobile scrolls within the dialog with a sticky
+  title/close row. Password inputs and final actions remain reachable by scrolling.
 - Read-only VPN checks reached Swagger and portal health (200). Authenticated
   directory behavior is verified with synthetic responses, not a live account.
 
