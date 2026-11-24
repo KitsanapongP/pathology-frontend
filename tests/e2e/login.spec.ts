@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { success, tokenData } from "./auth-fixture";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("http://api.e2e.test/v1/auth/tenants", route => route.fulfill({ json: success([{ code: "synthetic-hospital", name: "Synthetic Hospital" }]) }));
+});
+
 async function fillLogin(page: import("@playwright/test").Page, password = "synthetic-old") {
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
   await page.getByLabel("รหัสผ่าน", { exact: true }).fill(password);
@@ -11,7 +15,7 @@ test("login validates, reports invalid credentials, then creates a reloadable se
   let logins = 0; let refreshes = 0;
   await page.route("http://api.e2e.test/v1/auth/login", async route => {
     logins++;
-    expect(route.request().postDataJSON()).toEqual({ username: "synthetic-user", password: "synthetic-old" });
+    expect(route.request().postDataJSON()).toEqual({ tenant_code: "synthetic-hospital", username: "synthetic-user", password: "synthetic-old" });
     expect(route.request().headers()["authorization"]).toBeUndefined();
     expect(route.request().headers()["accept-language"]).toBe("th");
     if (logins === 1) await route.fulfill({ status: 401, json: { message: "Different backend translation", status: "error", status_code: 401, error_code: "auth.invalid_credentials", request_id: "synthetic" } });
@@ -38,7 +42,7 @@ test("login validates, reports invalid credentials, then creates a reloadable se
 test("new user changes password, signs in again with it and is not forced twice", async ({ page }) => {
   let changed = false;
   await page.route("http://api.e2e.test/v1/auth/login", async route => {
-    expect(route.request().postDataJSON()).toEqual({ username: "synthetic-user", password: changed ? "synthetic-new" : "synthetic-old" });
+    expect(route.request().postDataJSON()).toEqual({ tenant_code: "synthetic-hospital", username: "synthetic-user", password: changed ? "synthetic-new" : "synthetic-old" });
     await route.fulfill({ json: success(tokenData(!changed)) });
   });
   await page.route("http://api.e2e.test/v1/auth/refresh", route => route.fulfill({ json: success(tokenData(!changed)) }));
@@ -80,12 +84,33 @@ test("login displays Swagger length limits under the correct fields before sendi
   expect(logins).toBe(1);
 });
 
-for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 1244 }, { width: 390, height: 844 }]) {
+for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 1244 }, { width: 390, height: 844 }, { width: 482, height: 671 }]) {
   test(`login form fits ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
     await page.goto("/");
     await expect(page.getByLabel("ชื่อผู้ใช้", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("โรงพยาบาล", { exact: true })).toHaveCount(0);
+    await expect(page.getByLabel("รหัสโรงพยาบาล", { exact: true })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath("login-form.png"), fullPage: true });
   });
 }
+
+test("login uses the remembered hospital without a visible hospital field", async ({ page }) => {
+  await page.route("http://api.e2e.test/v1/auth/tenants", route => {
+    expect(route.request().headers()["authorization"]).toBeUndefined();
+    return route.fulfill({ json: success([{ code: "hospital-a", name: "Synthetic Hospital A" }, { code: "hospital-b", name: "Synthetic Hospital B" }]) });
+  });
+  await page.route("http://api.e2e.test/v1/auth/login", async route => {
+    expect(route.request().postDataJSON()).toEqual({ tenant_code: "hospital-b", username: "synthetic-user", password: "synthetic-old" });
+    await route.fulfill({ json: success(tokenData()) });
+  });
+  await page.addInitScript(() => localStorage.setItem("pathology:tenant-code:v1", "hospital-b"));
+  await page.goto("/");
+  await expect(page.getByRole("combobox")).toHaveCount(0);
+  await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
+  await page.getByLabel("รหัสผ่าน", { exact: true }).fill("synthetic-old");
+  await page.getByRole("button", { name: "เข้าสู่ระบบ", exact: true }).click();
+  await expect(page).toHaveURL("/portal");
+  expect(await page.evaluate(() => localStorage.getItem("pathology:tenant-code:v1"))).toBe("hospital-b");
+});

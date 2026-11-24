@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { success, tokenData } from "./auth-fixture";
+import { openAccountMenu, success, tokenData } from "./auth-fixture";
 
 for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 1244 }, { width: 390, height: 844 }]) {
   test(`demo role buttons fit ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
@@ -27,15 +27,27 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1896, height: 124
 for (const role of ["Student / Professor", "Admin"]) {
   test(`demo ${role} opens its dashboard, reloads and signs out without API calls`, async ({ page }) => {
     let apiCalls = 0;
-    await page.route("**/v1/**", route => { apiCalls++; return route.abort(); });
+    // หน้า login โหลดรายชื่อโรงพยาบาล (auth/tenants ไม่ต้อง login) เสมอ — ไม่ใช่ API ของ session demo
+    await page.route("**/v1/**", route => { if (!route.request().url().endsWith("/v1/auth/tenants")) apiCalls++; return route.abort(); });
     await page.goto("/");
     await page.getByRole("button", { name: `ข้ามการเข้าสู่ระบบ ${role}`, exact: true }).click();
     const destination = role === "Admin" ? "/portal/admin" : "/portal";
     await expect(page).toHaveURL(destination);
-    await expect(page.getByRole("button", { name: "ออกจากระบบ", exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "เมนูบัญชีผู้ใช้", exact: true })).toBeVisible();
     await page.reload();
     await expect(page).toHaveURL(destination);
-    await page.getByRole("button", { name: "ออกจากระบบ", exact: true }).first().click();
+    if (role === "Admin") {
+      await page.getByRole("link", { name: "จัดการผู้ใช้", exact: true }).click();
+      await expect(page).toHaveURL("/portal/admin/users");
+      await expect(page.getByRole("note")).toContainText("โหมดตัวอย่างไม่โหลดข้อมูลบัญชี");
+      await page.getByRole("button", { name: "สร้างผู้ใช้", exact: true }).click();
+      const editor = page.getByRole("dialog");
+      await expect(editor.getByLabel("ชื่อผู้ใช้", { exact: true })).toBeDisabled();
+      await expect(editor.getByRole("button", { name: "สร้างผู้ใช้", exact: true })).toBeDisabled();
+      await editor.getByRole("button", { name: "ปิดหน้าต่าง", exact: true }).first().click();
+    }
+    await openAccountMenu(page);
+    await page.getByRole("button", { name: "ออกจากระบบ", exact: true }).click();
     await expect(page).toHaveURL("/");
     await page.goto(destination);
     await expect(page).toHaveURL("/");
@@ -45,6 +57,7 @@ for (const role of ["Student / Professor", "Admin"]) {
 }
 
 test("normal login still works with skip buttons enabled", async ({ page }) => {
+  await page.route("http://api.e2e.test/v1/auth/tenants", route => route.fulfill({ json: success([{ code: "synthetic-hospital", name: "Synthetic Hospital" }]) }));
   await page.route("http://api.e2e.test/v1/auth/login", route => route.fulfill({ json: success(tokenData()) }));
   await page.goto("/");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
@@ -56,6 +69,7 @@ test("normal login still works with skip buttons enabled", async ({ page }) => {
 });
 
 test("real password restrictions remain enforced with skip buttons enabled", async ({ page }) => {
+  await page.route("http://api.e2e.test/v1/auth/tenants", route => route.fulfill({ json: success([{ code: "synthetic-hospital", name: "Synthetic Hospital" }]) }));
   await page.route("http://api.e2e.test/v1/auth/login", route => route.fulfill({ json: success(tokenData(true)) }));
   await page.goto("/");
   await page.getByLabel("ชื่อผู้ใช้", { exact: true }).fill("synthetic-user");
@@ -66,4 +80,22 @@ test("real password restrictions remain enforced with skip buttons enabled", asy
   await page.route("http://api.e2e.test/v1/auth/refresh", route => route.fulfill({ json: success(tokenData(true)) }));
   await page.goto("/portal");
   await expect(page).toHaveURL("/change-password");
+});
+
+test("profile preview stays read-only and never calls the service", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "ข้ามการเข้าสู่ระบบ Student / Professor", exact: true }).click();
+  await expect(page).toHaveURL("/portal");
+  let calls = 0;
+  await page.route("**/v1/**", route => { calls++; return route.abort(); });
+  await openAccountMenu(page);
+  await page.getByRole("link", { name: "โปรไฟล์ของฉัน", exact: true }).click();
+  await expect(page).toHaveURL("/portal/profile");
+  await expect(page.getByRole("note")).toHaveText("โปรไฟล์ใช้ได้เมื่อเข้าสู่ระบบด้วยบัญชีจริง โหมดตัวอย่างไม่โหลดหรือแก้ไขข้อมูลบัญชี");
+  await expect(page.getByLabel("ชื่อ", { exact: true })).toBeDisabled();
+  await expect(page.getByLabel("รหัสผ่านเดิม", { exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "บันทึกโปรไฟล์", exact: true })).toBeDisabled();
+  await page.reload();
+  await expect(page.getByLabel("ชื่อ", { exact: true })).toBeDisabled();
+  expect(calls).toBe(0);
 });

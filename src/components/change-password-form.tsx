@@ -10,7 +10,7 @@ import PasswordField from "./password-field";
 import LogoutButton from "./logout-button";
 import { usePortalLanguage } from "./portal-preferences";
 
-export default function ChangePasswordForm() {
+export default function ChangePasswordForm({ purpose = "initial", disabled = false, onPendingChange }: { purpose?: "initial" | "profile"; disabled?: boolean; onPendingChange?: (pending: boolean) => void }) {
   const { t } = usePortalLanguage();
   const router = useRouter();
   const [oldPassword, setOldPassword] = useState("");
@@ -25,16 +25,17 @@ export default function ChangePasswordForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (request.current) return;
+    if (disabled || request.current) return;
     const next: FieldErrors = {};
     if (!oldPassword) next.old_password = [t("กรุณาระบุรหัสผ่านเดิม")];
     if (Array.from(newPassword).length < 8) next.new_password = [t("รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร")];
     if (!confirmation || confirmation !== newPassword) next.confirm_password = [t("รหัสผ่านใหม่และการยืนยันไม่ตรงกัน")];
     setErrors(next); setApiError(null); setFailure("");
     if (Object.keys(next).length) return;
-    const controller = new AbortController(); request.current = controller; setPending(true);
+    const controller = new AbortController(); request.current = controller; setPending(true); onPendingChange?.(true);
     try {
       await portalApi.request("users/me/password", { method: "PUT", body: { old_password: oldPassword, new_password: newPassword }, signal: controller.signal });
+      controller.signal.throwIfAborted();
       markPasswordChanged();
       setOldPassword(""); setNewPassword(""); setConfirmation("");
       // Backend closes all sessions after this action; do not refresh or reuse this token.
@@ -44,22 +45,23 @@ export default function ChangePasswordForm() {
       if (controller.signal.aborted) return;
       if (error instanceof ApiError) {
         setApiError(error);
-        setErrors({ ...error.fieldErrors, ...(error.errorCode === "users.wrong_password" ? { old_password: [t("รหัสผ่านเดิมไม่ถูกต้อง")] } : {}) });
+        setErrors({ ...error.fieldErrors, ...(error.errorCode === "users.wrong_password" && !error.fieldErrors.old_password?.length ? { old_password: [error.message] } : {}) });
       } else setFailure(t("ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง"));
     } finally {
       if (request.current === controller) request.current = null;
-      if (!controller.signal.aborted) setPending(false);
+      if (!controller.signal.aborted) { setPending(false); onPendingChange?.(false); }
     }
   }
 
-  return <form noValidate onSubmit={submit} className="mt-7" aria-label={t("เปลี่ยนรหัสผ่านครั้งแรก")}>
-    <fieldset disabled={pending} className="space-y-5">
+  return <form noValidate onSubmit={submit} className="mt-7" aria-label={t(purpose === "initial" ? "เปลี่ยนรหัสผ่านครั้งแรก" : "เปลี่ยนรหัสผ่านของฉัน")} aria-busy={pending} aria-describedby="password-consequence">
+    <p id="password-consequence" className="mb-5 text-sm leading-6 text-[#536b8d]">{t("เมื่อเปลี่ยนรหัสผ่านสำเร็จ คุณจะออกจากระบบทุกอุปกรณ์และต้องเข้าสู่ระบบใหม่")}</p>
+    <fieldset disabled={disabled || pending} className="space-y-5">
       <PasswordField id="old_password" label="รหัสผ่านเดิม" value={oldPassword} onChange={setOldPassword} errors={errors.old_password} autoComplete="current-password" />
       <PasswordField id="new_password" label="รหัสผ่านใหม่" value={newPassword} onChange={setNewPassword} errors={errors.new_password} autoComplete="new-password" minLength={8} />
       <PasswordField id="confirm_password" label="ยืนยันรหัสผ่านใหม่" value={confirmation} onChange={setConfirmation} errors={errors.confirm_password} autoComplete="new-password" minLength={8} />
       <div className="text-sm text-red-700"><ApiErrorNotice error={apiError} />{failure && <p role="alert">{failure}</p>}</div>
       <button type="submit" className="min-h-12 w-full rounded-lg bg-[#10396f] px-4 py-3 text-base font-semibold text-white disabled:opacity-60">{t(pending ? "กำลังเปลี่ยนรหัสผ่าน" : "เปลี่ยนรหัสผ่าน")}</button>
     </fieldset>
-    <div className="mt-5 flex justify-center"><LogoutButton className="flex items-center gap-2 text-sm text-[#1556b8]" /></div>
+    {purpose === "initial" && <div className="mt-5 flex justify-center"><LogoutButton className="flex items-center gap-2 text-sm text-[#1556b8]" /></div>}
   </form>;
 }

@@ -13,7 +13,7 @@ function subscribe(callback: () => void) {
 type PreferencesValue = typeof defaults & { setLanguage: (language: PortalLanguage) => void; setFontSize: (size: number) => void };
 const Preferences = createContext<PreferencesValue>({ ...defaults, setLanguage: () => {}, setFontSize: () => {} });
 
-export default function PortalPreferences({ children }: { children: React.ReactNode }) {
+export default function PortalPreferences({ children, scaleText = true }: { children: React.ReactNode; scaleText?: boolean }) {
   const raw = useSyncExternalStore(subscribe, snapshot, () => "");
   let preferences = defaults;
   try {
@@ -27,9 +27,12 @@ export default function PortalPreferences({ children }: { children: React.ReactN
   }
   useEffect(() => {
     document.documentElement.lang = preferences.language;
-    document.documentElement.style.fontSize = `${16 * preferences.fontSize / 100}px`;
-    return () => { document.documentElement.lang = "th"; document.documentElement.style.removeProperty("font-size"); };
-  }, [preferences.language, preferences.fontSize]);
+    if (scaleText) document.documentElement.style.fontSize = `${16 * preferences.fontSize / 100}px`;
+    return () => {
+      document.documentElement.lang = "th";
+      if (scaleText) document.documentElement.style.removeProperty("font-size");
+    };
+  }, [preferences.language, preferences.fontSize, scaleText]);
   return <Preferences.Provider value={{ ...preferences, setLanguage: language => update({ ...preferences, language }), setFontSize: fontSize => update({ ...preferences, fontSize }) }}>{children}</Preferences.Provider>;
 }
 

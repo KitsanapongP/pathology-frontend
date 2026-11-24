@@ -1,5 +1,9 @@
 import type { Page } from "@playwright/test";
 
+export async function openAccountMenu(page: Page, language: "th" | "en" = "th") {
+  await page.locator(".portal-global-header").getByRole("button", { name: language === "en" ? "Account menu" : "เมนูบัญชีผู้ใช้", exact: true }).click();
+}
+
 export function tokenData(mustChangePassword = false) {
   return { access_token: "synthetic-e2e-access", refresh_token: "synthetic-e2e-refresh", token_type: "Bearer", expires_in: 300, refresh_expires_in: 1800, must_change_password: mustChangePassword };
 }
