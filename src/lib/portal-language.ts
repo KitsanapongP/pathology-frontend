@@ -2,6 +2,17 @@ export type PortalLanguage = "th" | "en";
 
 // Thai labels remain the canonical record/filter values. Translate presentation only.
 export const english: Record<string, string> = {
+  "รีเซ็ตรหัสผ่านผู้ใช้": "Reset user password",
+  "ลบผู้ใช้": "Delete user",
+  "ยืนยันรีเซ็ตรหัสผ่าน": "Confirm password reset",
+  "ยืนยันลบผู้ใช้": "Confirm user deletion",
+  "กรุณาพิมพ์ชื่อผู้ใช้ให้ตรงกับบัญชีที่ต้องการลบ": "Enter the exact username of the account to delete",
+  "ผู้ใช้จะออกจากระบบทุกอุปกรณ์ และต้องเปลี่ยนรหัสผ่านใหม่เมื่อเข้าสู่ระบบครั้งถัดไป": "This user will be signed out on all devices and must change their password at the next sign-in.",
+  "บัญชีนี้จะถูกลบออกจากรายการและไม่สามารถเข้าสู่ระบบได้": "This account will be removed from the list and can no longer sign in.",
+  "พิมพ์ชื่อผู้ใช้เพื่อยืนยัน": "Type the username to confirm",
+  "ยังยืนยันการดำเนินการไม่ได้ กรุณาตรวจสอบบัญชีผู้ใช้ก่อนลองอีกครั้ง": "The action could not be confirmed. Check this account before trying again.",
+  "รีเซ็ตรหัสผ่านสำเร็จ ผู้ใช้ต้องเปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบครั้งถัดไป": "Password reset. The user must change it at the next sign-in.",
+  "ลบผู้ใช้แล้ว": "User deleted",
   "ยังยืนยันการบันทึกไม่ได้ กรุณาตรวจสอบรายการผู้ใช้ก่อนลองอีกครั้ง": "The save could not be confirmed. Check the user list before trying again.",
   "สร้างผู้ใช้": "Create user",
   "แก้ไขผู้ใช้": "Edit user",

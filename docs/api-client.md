@@ -135,14 +135,14 @@ The directory links from portal home and the administration dashboard. All
 `/portal/admin` routes share `AdminShell`, including persistent desktop navigation
 and a mobile menu dialog; the directory does not mount another header or sidebar.
 Administration request, storage and log destinations retain local dashboard
-fixtures and do not use the portal user API. Reset and delete remain separate
-work and have no placeholder controls here. Preview makes no directory HTTP calls.
+fixtures and do not use the portal user API. Each user row exposes edit, password
+reset and delete as labelled icon actions. Preview makes no directory HTTP calls.
 
 The updated backend auth document confirms portal RBAC is pending: authenticated
 hospital users currently access all hospital pages, scoped to their tenant by
 the backend. `canPortal` in `src/lib/portal-permissions.ts` is the single UI
-permission policy; it grants `users.read`, `users.create` and `users.update` only
-after normal authentication.
+permission policy; it grants supported hospital user actions only after normal
+authentication, including read, create, update, password reset and delete.
 Do not infer roles or token claims from the document's illustrative examples.
 Keep authentication and mandatory-password guards independent of that policy.
 Directory HTTP 403 renders `PortalForbidden`, preserving backend feedback and
@@ -161,7 +161,7 @@ discards the local buffer. Successful writes refresh the current directory query
   eight Unicode characters and local confirmation; new users must change it at
   first login. Confirmation is never sent to the service.
 - Edit: `PUT /v1/users/{user_id}` sends the same six account fields without a
-  password. Resetting a password remains a separate endpoint/task.
+  password. Password reset uses its separate endpoint and confirmation below.
 - Username has 3–100 Unicode characters; names have 1–255, email is required and
   phone is optional digits up to 20. Text fields trim whitespace, passwords do not.
   Empty phone is `""`. Status values stay `active`/`inactive` in both languages.
@@ -175,6 +175,28 @@ discards the local buffer. Successful writes refresh the current directory query
   that the server did not save, so feedback asks the user to check the directory.
   Closing or successful save discards the form buffer; passwords never enter URL,
   browser storage or logs. Preview can open a disabled create form with no HTTP.
+
+## Password reset and deletion
+
+`AdminUserActionDialog` reads the selected account again before either action,
+checks its ID and displays the latest username, full name and email. The form
+explains the consequence before confirmation. Cancel/Escape discards the buffer;
+pending writes prevent cancellation and repeated submit, bounded to 30 seconds.
+
+- Reset: `PUT /v1/users/{user_id}/password` sends only `{ new_password }`, with at
+  least eight Unicode characters and local confirmation. It ends the target user's
+  sessions and forces their next password change. The actor's local session is not
+  marked password-required or cleared merely for resetting someone else.
+- Delete: `DELETE /v1/users/{user_id}` has no body. The user must type the exact
+  freshly loaded username; a mismatched/empty confirmation cannot submit. Backend
+  performs a soft delete and disables the account in Keycloak.
+- Success refreshes the current directory query. If deletion empties a page beyond
+  the last valid page, the URL returns to the last valid page while preserving
+  search and size. Errors never show a success notice. A network/timeout response
+  cannot establish whether the action completed; check the account before retry.
+  Backend field feedback, 403, missing users and request diagnostics stay shared.
+- Passwords and confirmation text stay in component memory only. No live account
+  is reset or deleted by automated QA; browser tests use synthetic responses.
 
 ## Backend handoff
 

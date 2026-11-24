@@ -30,7 +30,8 @@
   independently on mobile; pagination stacks with clearly disabled actions.
   Account dates use the selected locale and Asia/Bangkok.
 - Preview explains that a real account is required and makes no directory HTTP
-  calls. It can open the disabled create form; reset/delete remain subsequent work.
+  calls. It can open the disabled create form; reset/delete actions are available
+  only on real account rows and use fresh selected-user reads.
 - Create/edit browser checks cover client and combined backend field feedback,
   exact request bodies, cancellation, repeated-submit prevention, a fresh selected
   user read, unchanged URL query after save, list refresh, 403/404/read retry and
@@ -39,6 +40,11 @@
 - Inspected create/edit dialogs in English at 120% at 1896×1244, 1280×720 and
   390×844. Desktop uses two columns; mobile scrolls within the dialog with a sticky
   title/close row. Password inputs and final actions remain reachable by scrolling.
+- Reset/delete checks cover the exact target and payload, password validation,
+  backend password errors, pending duplicate prevention, cancellation, exact-name
+  deletion confirmation, stale renamed usernames, 403/404/500/network failures and
+  last-page recovery. Resetting another account leaves the actor's session intact.
+  Synthetic responses are used throughout; no live accounts are reset or deleted.
 - Read-only VPN checks reached Swagger and portal health (200). Authenticated
   directory behavior is verified with synthetic responses, not a live account.
 

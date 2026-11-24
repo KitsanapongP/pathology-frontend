@@ -265,10 +265,22 @@ button:not(:disabled), select {
 .users-panel .users-table th, .users-panel .users-table td { font-size: 1rem; padding: 16px 24px; }
 .users-panel .users-table th { white-space: normal; }
 .users-table td { overflow-wrap: anywhere; max-width: 420px; }
-.users-table th:nth-child(1), .users-table th:nth-child(5) { width: 16%; }
+.users-table th:nth-child(1) { width: 15%; }
+.users-table th:nth-child(5) { width: 14%; }
 .users-table th:nth-child(2) { width: 18%; }
-.users-table th:nth-child(3) { width: 24%; }
-.users-table th:nth-child(4), .users-table th:nth-child(6) { width: 13%; }
+.users-table th:nth-child(3) { width: 23%; }
+.users-table th:nth-child(4) { width: 12%; }
+.users-table th:nth-child(6) { width: 18%; }
+.users-row-actions { display: flex; gap: 4px; }
+.users-row-actions button { width: 44px; height: 44px; flex-shrink: 0; }
+.users-row-actions .users-delete-action { color: #b42318; }
+.user-action-identity { display: grid; gap: 12px; padding: 16px; border-radius: 10px; background: #f3f7fc; overflow-wrap: anywhere; }
+.user-action-identity dt { color: #617a98; font-size: .875rem; }
+.user-action-identity dd { font-size: 1rem; }
+.user-action-consequence { margin-block: 20px; font-size: 1rem; line-height: 1.6; }
+.user-action-feedback { margin-top: 20px; }
+.user-action-delete { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px; border-radius: 8px; background: #b42318; color: white; font-size: .9375rem; font-weight: 600; }
+.admin-user-action-dialog { max-width: 680px; }
 .users-table .portal-badge { font-size: .875rem; white-space: nowrap; }
 .users-feedback { padding: 24px; }
 .users-feedback p { margin-bottom: 16px; }
